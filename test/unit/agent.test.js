@@ -363,7 +363,9 @@ describe('runAgent', () => {
                 { role: 'user', content: 'x'.repeat(300) },
                 { role: 'assistant', content: 'x'.repeat(300) },
             ];
-            const chat = sinon.stub().rejects(new Error('Provider nicht erreichbar.'));
+            const providerError = new Error('Provider nicht erreichbar.');
+            providerError.usage = { inputTokens: 11, outputTokens: 7 };
+            const chat = sinon.stub().rejects(providerError);
             const tools = { definitions: [], execute: sinon.stub() };
 
             let error;
@@ -381,6 +383,7 @@ describe('runAgent', () => {
             }
 
             expect(error.message).to.include('Eingabe-Token-Limit');
+            expect(error.usage).to.deep.equal({ inputTokens: 11, outputTokens: 7 });
             expect(chat.callCount).to.equal(1);
         });
 
