@@ -3,6 +3,15 @@
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/), Versionierung nach [SemVer](https://semver.org/).
 
+## [0.1.10] - 2026-09-29
+
+### Behoben
+
+- Aktivierungstokens werden bei Neustarts und Updates aus der bestehenden
+  nativen Konfiguration wiederhergestellt und nicht durch leere Defaults ersetzt.
+- Kumulative Zähler, lokale Tagesgrenzen, Entitlement-Validierung und
+  Budget-Tagesanzeige verhalten sich an ihren Randfällen korrekt.
+
 ## [0.1.9] - 2026-09-17
 
 ### Behoben
