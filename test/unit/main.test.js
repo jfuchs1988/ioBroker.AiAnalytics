@@ -13,6 +13,23 @@ const { AiAnalytics } = proxyquire.noCallThru()('../../main', {
 });
 
 describe('AiAnalytics command dispatch', () => {
+    it('does not persist an invalid entitlement token', async () => {
+        const adapter = Object.create(AiAnalytics.prototype);
+        adapter.config = { licenseToken: 'existing-token' };
+        adapter.persistLicenseNative = sinon.stub().resolves();
+
+        let error;
+        try {
+            await adapter.storeLicenseToken('not-a-signed-token');
+        } catch (caught) {
+            error = caught;
+        }
+
+        expect(error).to.be.an('error');
+        expect(error.message).to.include('ungueltig signiert');
+        expect(adapter.persistLicenseNative.notCalled).to.equal(true);
+    });
+
     it('rejects an empty chat question before invoking the chat provider', async () => {
         const adapter = Object.create(AiAnalytics.prototype);
         adapter.log = { silly: () => {} };
@@ -238,6 +255,27 @@ describe('AiAnalytics license persistence', () => {
             native: { licenseToken: 'new-token', model: 'model-1' },
         })).to.equal(true);
         expect(adapter.config.licenseToken).to.equal('new-token');
+    });
+
+    it('restores a token retained in native configuration after an update or restart', async () => {
+        const adapter = Object.create(AiAnalytics.prototype);
+        adapter.config = { licenseToken: '' };
+        adapter.namespace = 'ai-analytics.0';
+        adapter.getForeignObjectAsync = sinon.stub().resolves({ native: {
+            licenseToken: 'retained-token',
+            licenseGithubLogin: 'user',
+            licenseTokenExpiresAt: 123,
+            licenseSponsorUntil: 100,
+        } });
+
+        await adapter.restorePersistedLicenseFields();
+
+        expect(adapter.config).to.include({
+            licenseToken: 'retained-token',
+            licenseGithubLogin: 'user',
+            licenseTokenExpiresAt: 123,
+            licenseSponsorUntil: 100,
+        });
     });
 });
 

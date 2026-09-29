@@ -86,6 +86,7 @@ class AiAnalytics extends utils.Adapter {
         this.runtimeLimits = getLimits(this.config || {});
         this.licenseActivation = null;
         this.licenseRenewalTimer = null;
+        this.licensePersistencePromise = Promise.resolve();
     }
 
     /**
@@ -140,11 +141,29 @@ class AiAnalytics extends utils.Adapter {
     }
 
     async persistLicenseNative(fields) {
-        const currentObject = await this.getForeignObjectAsync(this.namespace);
-        await this.extendForeignObjectAsync(this.namespace, {
-            native: { ...((currentObject && currentObject.native) || {}), ...fields },
+        const persist = (this.licensePersistencePromise || Promise.resolve()).catch(() => {}).then(async () => {
+            const currentObject = await this.getForeignObjectAsync(this.namespace);
+            await this.extendForeignObjectAsync(this.namespace, {
+                native: { ...((currentObject && currentObject.native) || {}), ...fields },
+            });
+            Object.assign(this.config, fields);
         });
-        Object.assign(this.config, fields);
+        this.licensePersistencePromise = persist;
+        return persist;
+    }
+
+    async restorePersistedLicenseFields() {
+        const object = await this.getForeignObjectAsync(this.namespace);
+        const native = object && object.native;
+        if (!native || typeof native !== 'object') return;
+        const fields = ['licenseToken', 'licenseGithubLogin', 'licenseTokenExpiresAt', 'licenseSponsorUntil'];
+        for (const field of fields) {
+            const current = this.config && this.config[field];
+            const persisted = native[field];
+            if ((current === undefined || current === '') && persisted !== undefined && persisted !== '') {
+                this.config[field] = persisted;
+            }
+        }
     }
 
     async ensureInstallationId() {
@@ -155,6 +174,8 @@ class AiAnalytics extends utils.Adapter {
     }
 
     async storeLicenseToken(token, metadata = {}) {
+        const license = evaluateLicense({ version: PACKAGE_VERSION, token, publicKeys: LICENSE_PUBLIC_KEYS });
+        if (license.status === 'invalid') throw new Error('Lizenzdienst lieferte ein ungueltig signiertes Entitlement.');
         await this.persistLicenseNative({
             licenseToken: token,
             ...(typeof metadata.githubLogin === 'string' ? { licenseGithubLogin: metadata.githubLogin } : {}),
@@ -191,12 +212,12 @@ class AiAnalytics extends utils.Adapter {
         while (this.licenseActivation === activation && Date.now() < deadline) {
             const result = await licenseBackend.getActivationStatus({ url: licenseBackend.DEFAULT_BACKEND_URL, activationCode: activation.activationCode });
             activation.status = result.status;
-            await this.setStateAsync(licenseBackend.ACTIVATION_STATE, { val: JSON.stringify({ verificationUri: activation.verificationUri, expiresAt: activation.expiresAt, status: activation.status }), ack: true });
+            await this.setStateAsync(licenseBackend.ACTIVATION_STATE, { val: JSON.stringify({ activationCode: activation.activationCode, verificationUri: activation.verificationUri, expiresAt: activation.expiresAt, status: activation.status }), ack: true });
             if (result.status === 'authorized') {
                 const entitlement = await licenseBackend.issueEntitlement({ url: licenseBackend.DEFAULT_BACKEND_URL, activationCode: activation.activationCode });
                 await this.storeLicenseToken(entitlement.token, entitlement);
                 activation.status = 'redeemed';
-                await this.setStateAsync(licenseBackend.ACTIVATION_STATE, { val: JSON.stringify({ verificationUri: activation.verificationUri, expiresAt: activation.expiresAt, status: activation.status }), ack: true });
+                await this.setStateAsync(licenseBackend.ACTIVATION_STATE, { val: JSON.stringify({ activationCode: activation.activationCode, verificationUri: activation.verificationUri, expiresAt: activation.expiresAt, status: activation.status }), ack: true });
                 return;
             }
             if (['denied', 'expired'].includes(result.status)) return;
@@ -272,13 +293,26 @@ class AiAnalytics extends utils.Adapter {
         await refreshTodaySummary(this);
         await ensureHealthState(this);
         await ensureLicenseStates(this);
+        await this.restorePersistedLicenseFields();
         await this.refreshLicenseState();
         await this.setObjectNotExistsAsync(licenseBackend.ACTIVATION_STATE, {
             type: 'state',
             common: { name: 'License activation', type: 'string', role: 'json', read: true, write: false },
             native: {},
         });
-        await this.setStateAsync(licenseBackend.ACTIVATION_STATE, { val: JSON.stringify({ status: 'none' }), ack: true });
+        const activationState = await this.getStateAsync(licenseBackend.ACTIVATION_STATE);
+        let persistedActivation;
+        try {
+            persistedActivation = activationState && activationState.val ? JSON.parse(activationState.val) : null;
+        } catch (_error) {
+            persistedActivation = null;
+        }
+        if (persistedActivation && persistedActivation.status === 'pending' && typeof persistedActivation.activationCode === 'string') {
+            this.licenseActivation = persistedActivation;
+            this.pollLicenseActivation().catch(error => this.log.warn(`Lizenzaktivierung fehlgeschlagen: ${error.message}`));
+        } else {
+            await this.setStateAsync(licenseBackend.ACTIVATION_STATE, { val: JSON.stringify({ status: 'none' }), ack: true });
+        }
         await this.ensureInstallationId();
         await ensureReachabilityStates(this);
         await this.ensureCatalogSyncState();
