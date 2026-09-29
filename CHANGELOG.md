@@ -3,6 +3,13 @@
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/), Versionierung nach [SemVer](https://semver.org/).
 
+## [0.1.11] - 2026-09-29
+
+### Behoben
+
+- Azure AI Foundry v1 verwendet API-Keys jetzt korrekt über den `api-key`-
+  Header statt als Bearer-Token bei Modellabfragen und Chat-Anfragen.
+
 ## [0.1.10] - 2026-09-29
 
 ### Behoben

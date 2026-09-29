@@ -323,6 +323,25 @@ describe('openai-compatible provider', () => {
         expect(JSON.parse(fetchStub.firstCall.args[1].body).model).to.equal('gpt-5.6-sol');
     });
 
+    it('sends Azure API keys using the api-key header', async () => {
+        const fetchStub = sinon.stub(global, 'fetch').resolves({
+            ok: true,
+            body: null,
+            text: async () => JSON.stringify({ output: [{ type: 'message', content: [{ type: 'output_text', text: 'ok' }] }] }),
+        });
+        const provider = createOpenAiCompatibleProvider({
+            type: 'local',
+            apiKey: 'azure-key',
+            model: 'gpt-5.6-sol',
+            baseUrl: 'https://resource.services.ai.azure.com/openai/v1',
+        });
+
+        await provider.chat({ system: 's', messages: [], tools: [] });
+
+        expect(fetchStub.firstCall.args[1].headers).to.include({ 'api-key': 'azure-key' });
+        expect(fetchStub.firstCall.args[1].headers).not.to.have.property('authorization');
+    });
+
     it('lists only free OpenRouter models that support tools', async () => {
         const fetchStub = sinon.stub().resolves({
             ok: true,
