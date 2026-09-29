@@ -6,8 +6,9 @@ Kurzer Übergabestand für die nächste Sitzung. Abgeschlossene Historie steht i
 
 ## WIP
 
-- Aktueller Fix-Branch: `fix/license-backend-timeout-and-key-rotation`, von
-  `master` nach Release `v0.1.12`.
+- Release `v0.1.13` ist veröffentlicht: PR #52 (Fix) und PR #53 (Release)
+  wurden gemergt, Tag und GitHub-Release sind vorhanden. Keine offenen Pull
+  Requests.
 - Ursache für "Aktivierung starten" schlägt fehl / keine AI-Calls möglich
   (Live-Debugging über Claude in Chrome auf der echten Admin-UI):
   zwei unabhängige Fehler im Lizenz-/Entitlement-Pfad, die beide dieselben
@@ -30,11 +31,18 @@ Kurzer Übergabestand für die nächste Sitzung. Abgeschlossene Historie steht i
      echtes, frisch ausgestelltes Entitlement verifiziert
      (`evaluateLicense()` → `status: active, fullAccess: true`). `main.js`
      aktualisiert.
-- Verifikation: `npm test` (506 Unit-/60 Admin-Tests) und Lint erfolgreich.
+- Verifikation: `npm test` (506 Unit-/60 Admin-Tests), Lint,
+  Release-Metadatenprüfung, Paketbau und echter E2E-Test (2 Tests) erfolgreich.
   Live-Aktivierung im Admin-UI danach erfolgreich abgeschlossen (Token
   gespeichert).
-- Nächste Aktion: Branch pushen, PR öffnen, mergen, danach Release `v0.1.13`
-  (Version/CHANGELOG/`io-package.json`-News, Paketbau, Tag, GitHub-Release).
+- Lehre für künftige Releases: nach jedem Versionsbump `npm test` erneut
+  laufen lassen, nicht nur `check:release`/`pack:release`/`test:e2e` — der
+  Dokumentationstest `keeps package versions synchronized` prüft auch
+  `package-lock.json` und schlug im ersten CI-Lauf von PR #53 fehl, weil das
+  Lockfile nicht mit `npm install --package-lock-only` nachgezogen war.
+- Offen (siehe Nächste Schritte): Backend-seitiger Key-Rotation-Prozess für
+  `entitlement-signing-key`, damit ein künftiger Secret-Wechsel nicht erneut
+  unbemerkt bleibt.
 - Offene externe Aufgabe: Veröffentlichung bzw. Abstimmung mit der offiziellen
   ioBroker-Adapter-Liste; danach offizieller Adapter-Checker erneut ausführen.
 - GitHub meldet weiterhin transitive Entwicklungs-Alerts für
