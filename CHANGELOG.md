@@ -3,6 +3,13 @@
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/), Versionierung nach [SemVer](https://semver.org/).
 
+## [0.1.12] - 2026-09-29
+
+### Behoben
+
+- Die Datenpunktklassifizierung fordert für String- und andere nichtnumerische
+  Werte keine numerische InfluxDB-Aggregation mehr an.
+
 ## [0.1.11] - 2026-09-29
 
 ### Behoben
