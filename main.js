@@ -48,9 +48,13 @@ function textValue(value) {
     return Object.values(value).find((item) => typeof item === 'string') || '';
 }
 // Filled with the public keys of the separate entitlement web application.
+// Rotated 2026-09-29: a backend/Key Vault redeploy regenerated the "prod-1"
+// signing secret without updating this value, making every issued entitlement
+// fail signature verification. The current key was re-derived from the live
+// Key Vault secret and verified against a freshly issued real entitlement.
 const LICENSE_PUBLIC_KEYS = Object.freeze({
     'prod-1': `-----BEGIN PUBLIC KEY-----
-MCowBQYDK2VwAyEA/qlqUJxv1FmBoV9jdzpOdDsUE1Uhl4skOwXKOG5rZ2w=
+MCowBQYDK2VwAyEAMnnfDCMnj3TEdNJiggNiPY1zQ/RBCo8I7nuy6OYJlnE=
 -----END PUBLIC KEY-----`,
 });
 

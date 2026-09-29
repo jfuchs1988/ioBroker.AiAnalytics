@@ -33,6 +33,14 @@ describe('licenseBackend', () => {
         expect(request.fetchWithTimeout.firstCall.args[1].headers.authorization).to.equal('Bearer old-token');
     });
 
+    it('uses a longer timeout than the provider default to tolerate a cold-started license backend', async () => {
+        request.readJsonResponse.resolves({ activationCode: 'ABC123-XYZ', verificationUri: 'https://example.test/link/ABC123-XYZ', expiresAt: 123 });
+        const client = require('../../lib/licenseBackend');
+        await client.createActivation({ url: 'https://example.test', installationId: client.newInstallationId() });
+        expect(request.fetchWithTimeout.firstCall.args[2]).to.equal(client.LICENSE_REQUEST_TIMEOUT_MS);
+        expect(client.LICENSE_REQUEST_TIMEOUT_MS).to.be.greaterThan(30000);
+    });
+
     it('renews only inside the final 24 hours of token validity', () => {
         const client = require('../../lib/licenseBackend');
         const now = 1_700_000_000;
