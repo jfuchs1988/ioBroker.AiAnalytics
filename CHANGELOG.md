@@ -3,6 +3,20 @@
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/), Versionierung nach [SemVer](https://semver.org/).
 
+## [0.1.13] - 2026-09-29
+
+### Behoben
+
+- Der Lizenz-/Entitlement-Backend-Aufruf (Aktivierung, Ausstellung, Erneuerung)
+  hat jetzt ein eigenes 60-Sekunden-Timeout statt des geteilten
+  30-Sekunden-Provider-Timeouts, damit ein Kaltstart des Backends die
+  Aktivierung nicht mehr mit "Keine Antwort vom Adapter." abbrechen lässt.
+- Der im Adapter hinterlegte Ed25519-Public-Key für die Entitlement-Prüfung
+  wurde auf den aktuellen Schlüssel im produktiven Backend-Key-Vault
+  aktualisiert; zuvor scheiterte jede Aktivierung mit "Lizenzdienst lieferte
+  ein ungueltig signiertes Entitlement.", was ohne gespeichertes Entitlement
+  auch alle Chat-/KI-Anfragen blockierte.
+
 ## [0.1.12] - 2026-09-29
 
 ### Behoben
