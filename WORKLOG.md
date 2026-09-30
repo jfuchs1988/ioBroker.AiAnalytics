@@ -6,35 +6,17 @@ Kurzer Übergabestand für die nächste Sitzung. Abgeschlossene Historie steht i
 
 ## WIP
 
-- **Security-Fix `fix/security-advisories`:** aktive Alerts für `moment`,
-  `serialize-javascript`, `brace-expansion`, `adm-zip` und `undici` gepatcht;
-  zusätzlich `esbuild`-Advisory aus E2E-Testpfad über ein enges Override
-  behoben. `npm audit` meldet 0 Vulnerabilities; `npm test` (536 Unit-/60
-  Admin-Tests), Lint, Admin-Build und E2E (2 Tests) erfolgreich. Release-PRs
-  #63–#65 werden durch den konsolidierten Security-PR ersetzt. Nächster Schritt:
-  Commit/Push, PR nach master und danach Release.
-- **Pause 2026-09-30 — Branch `feature/timezone-counter-quality`:**
-  `develop` enthält die gemergten Fixes bis einschließlich
-  `c06d959 merge: uncertain energy balance handling into develop`. Die Punkte
-  1 und 2 der vorherigen Runde sind abgeschlossen: unsichere Energiebilanzen
-  werden fail-closed gemeldet; `qualityReasons` und `missing_data` werden
-  ausgegeben. Der Arbeitsbaum enthält nun uncommittete Vorarbeiten für die
-  nächsten Punkte:
-  - kumulative Zähler: `maxPlausibleKwhPerHour`, robuste Rate-Ausreißer,
-    `outliers` und `quality: uncertain`;
-  - Zeitzone: Spec/Plan/ADR, IANA-Resolver mit Adapter-Override,
-    `system.config.common.timeZone` und Host-Fallback, Konfliktwarnungen,
-    `info.timeZone`-Diagnose-State und `admin/jsonConfig.json`-Feld;
-  - Admin-/CSV-Feld für den plausiblen Zähleranstieg;
-  - lokale Perioden verwenden den Adapter-Zeitzonen-Override in Tools,
-    Energiebilanz, Anomalie- und HVAC-Korrelation.
-  Tests nach dem bisherigen Zwischenstand: `npm run test:unit` **536** grün,
-  `npm run test:admin` **60** grün, `npm run lint` grün; `git diff --check`
-  grün. Bei Wiederaufnahme alle Verifikationen erneut ausführen.
-  **Noch offen:** Release-Metadaten/Changelog, Commit und Merge dieses Branches nach
-  `develop`. Danach PR von `develop` nach `master`; erst nach PR-Merge Release
-  (Version bump, Changelog/io-package, Build, Tag, GitHub Release).
-  Live-Test bleibt übersprungen, wie vom Nutzer angewiesen.
+- **Dependabot-Updates — Branch `fix/dependabot-dev-updates`:** die sechs
+  offenen PRs #55–#60 betreffen ausschließlich direkte Dev-Abhängigkeiten.
+  Zu einer einzelnen Aktualisierung gebündelt; auf die inzwischen aktuellen
+  kompatiblen Patchversionen angehoben und das Admin-Bundle neu gebaut.
+  Verifikation: `npm ci`, `npm test` (536 Unit-/60 Admin-Tests), Lint,
+  Admin-Build, E2E (2 Tests), `npm audit` (0 Vulnerabilities),
+  `check:release` und `git diff --check` erfolgreich. Die sechs bestehenden
+  PRs bleiben offen, bis der Ersatz-PR gemergt ist. Nächster Schritt: committen,
+  Ersatz-PR nach `master` erstellen und dessen CI abwarten; danach die sechs
+  ersetzten Dependabot-PRs/Branches schließen/löschen. Nach Merge folgt Release
+  gemäß `CONTRIBUTING.md`.
 
 - `fix/uncertain-energy-balance`: Bilanzresiduals mit unsicherer Leistungs- oder
   Zählerhistorie werden verworfen, unvollständige Baseline-Tage ausgeschlossen
