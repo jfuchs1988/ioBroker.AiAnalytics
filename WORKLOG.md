@@ -6,6 +6,13 @@ Kurzer Übergabestand für die nächste Sitzung. Abgeschlossene Historie steht i
 
 ## WIP
 
+- **Security-Fix `fix/security-advisories`:** aktive Alerts für `moment`,
+  `serialize-javascript`, `brace-expansion`, `adm-zip` und `undici` gepatcht;
+  zusätzlich `esbuild`-Advisory aus E2E-Testpfad über ein enges Override
+  behoben. `npm audit` meldet 0 Vulnerabilities; `npm test` (536 Unit-/60
+  Admin-Tests), Lint, Admin-Build und E2E (2 Tests) erfolgreich. Release-PRs
+  #63–#65 werden durch den konsolidierten Security-PR ersetzt. Nächster Schritt:
+  Commit/Push, PR nach master und danach Release.
 - **Pause 2026-09-30 — Branch `feature/timezone-counter-quality`:**
   `develop` enthält die gemergten Fixes bis einschließlich
   `c06d959 merge: uncertain energy balance handling into develop`. Die Punkte
