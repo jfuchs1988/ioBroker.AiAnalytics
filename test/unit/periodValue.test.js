@@ -55,6 +55,33 @@ describe('periodValue', () => {
         expect(result).to.include({ total: 40, quality: 'uncertain' });
     });
 
+    it('omits and reports statistically extreme positive cumulative jumps', async () => {
+        const getHistory = async (_adapter, _instance, _source, start) => start < 0
+            ? [{ ts: -18000000, val: 0 }, { ts: -14400000, val: 1 }, { ts: -10800000, val: 2 }, { ts: -7200000, val: 3 }, { ts: -3600000, val: 4 }]
+            : [{ ts: 0, val: 1004 }, { ts: 3600000, val: 1005 }];
+        const { computePeriodValue } = load(getHistory);
+
+        const result = await computePeriodValue({}, { historyInstance: 'history.0', sourceId: 'meter.total', unit: 'kWh', valueKind: 'cumulative_total' }, { start: 0, end: 3600000 });
+
+        expect(result.total).to.equal(1);
+        expect(result.quality).to.equal('uncertain');
+        expect(result.outliers).to.have.lengthOf(1);
+        expect(result.outliers[0]).to.include({ delta: 1000, reason: 'statistical_rate' });
+    });
+
+    it('uses an explicitly configured plausible rate for sparse cumulative counters', async () => {
+        const getHistory = async (_adapter, _instance, _source, start) => start < 0
+            ? [{ ts: -3600000, val: 0 }]
+            : [{ ts: 0, val: 3 }];
+        const { computePeriodValue } = load(getHistory);
+
+        const result = await computePeriodValue({}, { historyInstance: 'history.0', sourceId: 'meter.total', unit: 'kWh', valueKind: 'cumulative_total', maxPlausibleKwhPerHour: 2 }, { start: 0, end: 3600000 });
+
+        expect(result.total).to.equal(0);
+        expect(result.quality).to.equal('uncertain');
+        expect(result.outliers[0]).to.include({ delta: 3, reason: 'configured_rate' });
+    });
+
     it('groups daily counters by the configured local calendar day', async () => {
         const getHistory = async () => [
             { ts: Date.parse('2026-01-01T23:30:00Z'), max: 10 },

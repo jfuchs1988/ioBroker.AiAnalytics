@@ -21,7 +21,7 @@ const SETTINGS_COLUMNS = [
     'onboardingPricePerMillionInputTokens', 'onboardingPricePerMillionOutputTokens',
     'onboardingMaxInputTokens', 'onboardingMaxOutputTokens',
     'onboardingContextWindowTokens',
-    'checkIntervalHours', 'dailyBudgetEur', 'maxAgentIterations', 'maxToolCalls', 'maxPeriodsPerRequest', 'maxPeriodsPerToolCall', 'silentIfNothingFound', 'enableValueKindBackfill', 'enableDataQualityBackfill', 'recheckValuesOnNextDiscovery',
+    'checkIntervalHours', 'timeZone', 'dailyBudgetEur', 'maxAgentIterations', 'maxToolCalls', 'maxPeriodsPerRequest', 'maxPeriodsPerToolCall', 'silentIfNothingFound', 'enableValueKindBackfill', 'enableDataQualityBackfill', 'recheckValuesOnNextDiscovery',
 ];
 const SETTINGS_NUMBER_COLUMNS = new Set([
     'chatPricePerMillionInputTokens', 'chatPricePerMillionOutputTokens',
@@ -71,6 +71,9 @@ export function validateSettingImportValue(key, rawValue) {
     if (SETTINGS_BOOLEAN_COLUMNS.has(key)) value = parseBoolean(value, key);
     if (key === 'providerType' && !PROVIDER_TYPES.has(value)) throw new Error(`Ungültiger providerType: ${value}`);
     if (key === 'onboardingProviderType' && value !== '' && !PROVIDER_TYPES.has(value)) throw new Error(`Ungültiger onboardingProviderType: ${value}`);
+    if (key === 'timeZone' && value !== '') {
+        try { new Intl.DateTimeFormat('en', { timeZone: value }).format(); } catch (_error) { throw new Error(`Ungültige IANA-Zeitzone: ${value}`); }
+    }
     return value;
 }
 

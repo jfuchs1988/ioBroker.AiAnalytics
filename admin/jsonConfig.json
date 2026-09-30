@@ -303,6 +303,16 @@
           "lg": 2,
           "xl": 2
         },
+        "timeZone": {
+          "type": "text",
+          "label": "Zeitzone (IANA, optionaler Override)",
+          "help": "Leer lassen für system.config bzw. die ioBroker-Hostzeitzone, zum Beispiel Europe/Berlin.",
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 4,
+          "xl": 4
+        },
         "dailyBudgetEur": {
           "type": "number",
           "label": "Taegliches Budget (EUR, 0 = kein Limit)",
