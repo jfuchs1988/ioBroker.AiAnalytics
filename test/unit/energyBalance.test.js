@@ -136,6 +136,53 @@ describe('findEnergyBalanceCandidates', () => {
         expect(computePeriodEnergy.called).to.equal(true);
     });
 
+    it('reports missing data instead of calculating a residual from an incomplete power day', async () => {
+        const entries = [
+            { sourceId: 'pv.0.total', description: 'PV', valueKind: 'cumulative_total', derivedMetricGroupId: 'energy-1', derivedMetricRole: 'pv_generation', active: true, dataCompleteness: 'complete' },
+            { sourceId: 'meter.0.power', description: 'Netzleistung', valueKind: 'gauge', unit: 'kW', derivedMetricGroupId: 'energy-1', derivedMetricRole: 'grid_power', active: true, dataCompleteness: 'complete' },
+            { sourceId: 'meter.0.consumption', description: 'Verbrauch', valueKind: 'cumulative_total', derivedMetricGroupId: 'energy-1', derivedMetricRole: 'consumption', active: true, dataCompleteness: 'complete' },
+        ];
+        const computePeriodValue = sinon.stub().callsFake((adapter, entry) => Promise.resolve({ total: entry.derivedMetricRole === 'pv_generation' ? 10 : 50, quality: 'ok' }));
+        const computePeriodEnergy = sinon.stub().callsFake((adapter, _entry, period) => Promise.resolve({
+            positiveKwh: 0,
+            negativeKwh: 0,
+            quality: period.start === -1 ? 'gaps' : 'complete',
+            skippedIntervals: period.start === -1 ? 3 : 0,
+        }));
+        const { findEnergyBalanceCandidates } = loadEnergyBalanceWithStubs({ computePeriodValue, computePeriodEnergy });
+
+        const result = await findEnergyBalanceCandidates({}, entries, 30 * 24 * 3600 * 1000);
+
+        expect(result.candidates).to.have.lengthOf(1);
+        expect(result.candidates[0]).to.include({ reason: 'energy_balance_missing_data', currentResidual: null, dataCompleteness: 'gaps', quality: 'uncertain' });
+        expect(result.candidates[0].qualityReasons).to.include('grid_power');
+    });
+
+    it('excludes incomplete baseline days from residual comparisons', async () => {
+        const entries = [
+            { sourceId: 'pv.0.total', description: 'PV', valueKind: 'cumulative_total', derivedMetricGroupId: 'energy-1', derivedMetricRole: 'pv_generation', active: true, dataCompleteness: 'complete' },
+            { sourceId: 'meter.0.power', description: 'Netzleistung', valueKind: 'gauge', unit: 'kW', derivedMetricGroupId: 'energy-1', derivedMetricRole: 'grid_power', active: true, dataCompleteness: 'complete' },
+            { sourceId: 'meter.0.consumption', description: 'Verbrauch', valueKind: 'cumulative_total', derivedMetricGroupId: 'energy-1', derivedMetricRole: 'consumption', active: true, dataCompleteness: 'complete' },
+        ];
+        const computePeriodValue = sinon.stub().callsFake((adapter, entry) => Promise.resolve({ total: entry.derivedMetricRole === 'pv_generation' ? 10 : 5, quality: 'ok' }));
+        const computePeriodEnergy = sinon.stub().callsFake((adapter, _entry, period) => Promise.resolve({
+            positiveKwh: 0,
+            negativeKwh: 0,
+            quality: period.start === -8 ? 'gaps' : 'complete',
+        }));
+        let observedBaseline;
+        const detectDailyAggregateAnomaly = sinon.stub().callsFake(({ baselineValues, currentValue }) => {
+            observedBaseline = baselineValues;
+            return { reason: 'deviation', currentValue, baselineMedian: 5, robustZ: 4, relativeChange: 1, currentCount: 1, baselineCount: baselineValues.length, dataCompleteness: 'complete' };
+        });
+        const { findEnergyBalanceCandidates } = loadEnergyBalanceWithStubs({ computePeriodValue, computePeriodEnergy, detectDailyAggregateAnomaly });
+
+        await findEnergyBalanceCandidates({}, entries, 30 * 24 * 3600 * 1000);
+
+        expect(observedBaseline).to.have.lengthOf(6);
+        expect(observedBaseline).to.not.include(null);
+    });
+
     it('skips a group with gauge PV because it cannot provide an energy total', async () => {
         const entries = makeGroup({ pv_generation: { valueKind: 'gauge' } });
         const computePeriodValue = sinon.stub().resolves({ total: 0 });

@@ -6,6 +6,10 @@ Kurzer Übergabestand für die nächste Sitzung. Abgeschlossene Historie steht i
 
 ## WIP
 
+- `fix/uncertain-energy-balance`: Bilanzresiduals mit unsicherer Leistungs- oder
+  Zählerhistorie werden verworfen, unvollständige Baseline-Tage ausgeschlossen
+  und Datenlücken mit betroffenen Rollen markiert. `npm test` (530 Unit-/60
+  Admin-Tests) und `npm run lint` erfolgreich. Nächster Schritt: Review/Merge.
 - Live-Testlauf am 30.09.2026 fortgesetzt: drei getrennte KI-Abfragen zu PV-
   Tageszählern, PV-Leistungsdaten und Heizungsdaten jeweils gegen unabhängige
   InfluxDB-Referenzabfragen geprüft. Heizungswerte stimmten praktisch mit der
