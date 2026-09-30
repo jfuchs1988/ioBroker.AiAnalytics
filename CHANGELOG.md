@@ -3,6 +3,21 @@
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/), Versionierung nach [SemVer](https://semver.org/).
 
+## [0.1.14] - 2026-09-30
+
+### Behoben
+
+- Unvollständige Leistungs- oder Zählerhistorien werden in Energiebilanzen als
+  unsicher markiert und nicht als belastbare Abweichung ausgewertet.
+- Unplausible Sprünge kumulativer Zähler werden erkannt und ausgewiesen.
+- Lokale Kalendertage verwenden die aufgelöste ioBroker-Zeitzone mit Diagnose,
+  Konfliktwarnung und optionalem Adapter-Override.
+
+### Hinzugefügt
+
+- Sichere Integration von `grid_power` und `battery_power` mit sichtbaren
+  Datenlücken.
+
 ## [0.1.13] - 2026-09-29
 
 ### Behoben
