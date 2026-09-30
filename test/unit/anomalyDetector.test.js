@@ -144,6 +144,16 @@ describe('detectDailyAggregateAnomaly', () => {
 
         expect(result).to.equal(null);
     });
+
+    it('still reports incomplete current data when there are too few baseline days', () => {
+        const result = detectDailyAggregateAnomaly({
+            currentValue: null,
+            baselineValues: [9, 10],
+            dataCompleteness: 'gaps',
+        });
+
+        expect(result).to.include({ reason: 'missing_data', currentValue: null, baselineCount: 2, dataCompleteness: 'gaps' });
+    });
 });
 
 describe('isEligibleCatalogEntry', () => {

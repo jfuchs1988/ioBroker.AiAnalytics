@@ -842,6 +842,7 @@ class AiAnalytics extends utils.Adapter {
                       'Verwende fuer grid_power oder battery_power getPeriodEnergy statt Rohwerte zu addieren; uebersprungene Intervalle und quality=gaps/uncertain muessen genannt werden. ' +
                      'Nutze in deiner Antwort IMMER die "description" aus den Werkzeug-Ergebnissen (getHistory/compareTimeframes) statt der rohen sourceId, damit die Ausgabe fuer den Nutzer lesbar ist. ' +
                      'Falls getPeriodTotal/comparePeriods ein Objekt mit dataCompleteness "gaps" oder "stale" liefern, benenne diese Unsicherheit in deiner Antwort statt sie zu verschweigen. ' +
+                     'Energiebilanz-Kandidaten mit dataCompleteness "gaps" enthalten kein belastbares aktuelles Residuum; nenne qualityReasons und melde fehlende Daten statt einer numerischen Abweichung. ' +
                      'Bei einem Objekt mit derivedMetricRole "grid_power" oder "battery_power" (Momentanleistung, kein Zaehler) ' +
                      'liefert getPeriodTotal/comparePeriods min/max als Spitzenlast in beide Richtungen; ohne derivedMetricInverted (Standard) ' +
                      'ist bei grid_power positiv = Netzbezug/negativ = Einspeisung, bei battery_power positiv = Laden/negativ = Entladen — ' +
