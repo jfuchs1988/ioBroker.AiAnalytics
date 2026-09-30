@@ -38,6 +38,8 @@ describe('admin CSV helpers', () => {
         expect(() => validateCatalogImportValue('valueKind', 'command')).toThrow('valueKind');
         expect(validateCatalogImportValue('derivedMetricRole', 'pv_generation')).toBe('pv_generation');
         expect(() => validateCatalogImportValue('derivedMetricRole', 'unknown')).toThrow('derivedMetricRole');
+        expect(validateCatalogImportValue('maxPlausibleKwhPerHour', '42')).toBe(42);
+        expect(() => validateCatalogImportValue('maxPlausibleKwhPerHour', '0')).toThrow('maxPlausibleKwhPerHour');
         expect(validateCatalogImportValue('derivedMetricRole', 'battery_charge')).toBe('battery_charge');
         expect(validateCatalogImportValue('derivedMetricRole', 'grid_power')).toBe('grid_power');
         expect(validateCatalogImportValue('derivedMetricRole', 'battery_power')).toBe('battery_power');
@@ -55,5 +57,7 @@ describe('admin CSV helpers', () => {
         expect(() => validateSettingImportValue('checkIntervalHours', '0')).toThrow('checkIntervalHours');
         expect(() => validateSettingImportValue('dailyBudgetEur', 'NaN')).toThrow('dailyBudgetEur');
         expect(() => validateSettingImportValue('providerType', 'unknown')).toThrow('providerType');
+        expect(validateSettingImportValue('timeZone', 'Europe/Berlin')).toBe('Europe/Berlin');
+        expect(() => validateSettingImportValue('timeZone', 'Not/AZone')).toThrow('IANA');
     });
 });

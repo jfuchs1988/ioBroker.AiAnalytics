@@ -12,6 +12,7 @@ Nur die für den aktuellen Task genannten Dateien sollen geladen werden.
 | KI | [ai-runtime.md](ai-runtime.md) | Provider, Agent, Prompts und Onboarding |
 | Admin | [admin-ui.md](admin-ui.md) | JSON Config, React-Komponenten und Custom-Tab |
 | Tests | [testing.md](testing.md) | Testpyramide, Befehle und bekannte Grenzen |
+| Live-Daten | [live-history-testing.md](live-history-testing.md) | Browser-CDP, InfluxDB-Referenzen und Live-Tool-Tests |
 | Lizenz | [licensing.md](licensing.md) | MIT-Kern, Sponsor-Komponenten und Entitlements |
 | Workflow | [development-workflow.md](development-workflow.md) | Branches, Dokumentation, Release und Übergabe |
 

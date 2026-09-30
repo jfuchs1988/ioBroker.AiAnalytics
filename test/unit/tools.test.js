@@ -3,7 +3,7 @@ const { expect } = require('chai');
 const sinon = require('sinon');
 const proxyquire = require('proxyquire');
 
-function loadToolsWithStubs({ getAllCatalogEntries, getHistory, compareTimeframes, setCatalogEntry, getLocalDayBoundaries, getLocalTimeZone }) {
+function loadToolsWithStubs({ getAllCatalogEntries, getHistory, compareTimeframes, setCatalogEntry, getLocalDayBoundaries, getLocalTimeZone, shiftLocalCalendarDay }) {
     // '@global': true, damit die Stubs auch die von lib/periodValue.js intern
     // requirten './dataAccess'/'./promptContext' abdecken (transitive Requires
     // werden von proxyquire sonst nicht ueberschrieben).
@@ -13,6 +13,7 @@ function loadToolsWithStubs({ getAllCatalogEntries, getHistory, compareTimeframe
         './promptContext': {
             getLocalDayBoundaries: getLocalDayBoundaries || sinon.stub(),
             getLocalTimeZone: getLocalTimeZone || sinon.stub().returns('UTC'),
+            shiftLocalCalendarDay: shiftLocalCalendarDay || ((value) => value),
             '@global': true,
         },
     });
@@ -27,6 +28,7 @@ describe('buildTools', () => {
             'getHistory',
             'compareTimeframes',
             'getPeriodTotal',
+            'getPeriodEnergy',
             'comparePeriods',
             'getSelfConsumption',
             'updateCatalogEntry',
@@ -450,8 +452,30 @@ describe('buildTools', () => {
             getHistory,
         });
         const result = await buildTools({}).execute('getPeriodTotal', { sourceId: 'meter.0.daily', periods: [{ start: 0, end: 10 }] });
-        expect(result.periods).to.deep.equal([{ start: 0, end: 10, total: 12 }]);
+        expect(result.periods[0]).to.include({ start: 0, end: 10, total: 8, quality: 'ok' });
+        expect(result.periods[0].resets).to.deep.equal([3]);
         expect(getHistory.calledOnceWith({}, 'influxdb.0', 'meter.0.daily', 0, 10, 'minmax')).to.equal(true);
+    });
+
+    it('integrates a power role and reports long gaps', async () => {
+        const getHistory = sinon.stub().resolves([
+            { ts: 0, val: 6000 },
+            { ts: 10 * 60 * 1000, val: 6000 },
+            { ts: 10 * 60 * 1000 + 16 * 60 * 1000, val: 6000 },
+        ]);
+        const { buildTools } = loadToolsWithStubs({
+            getAllCatalogEntries: sinon.stub().resolves([{
+                sourceId: 'meter.0.power', historyInstance: 'influxdb.0', description: 'Netzleistung', unit: 'W',
+                valueKind: 'gauge', derivedMetricRole: 'grid_power',
+            }]),
+            getHistory,
+        });
+
+        const result = await buildTools({}).execute('getPeriodEnergy', { sourceId: 'meter.0.power', periods: [{ start: 0, end: 7200000 }] });
+
+        expect(result.normalizedUnit).to.equal('kW');
+        expect(result.periods[0]).to.include({ importKwh: 1, quality: 'gaps', integratedIntervals: 1, skippedIntervals: 1 });
+        expect(getHistory.calledOnceWith({}, 'influxdb.0', 'meter.0.power', 0, 7200000, 'none')).to.equal(true);
     });
 
     it('includes data-quality fields in getPeriodTotal results, with unknown fallback', async () => {
@@ -507,7 +531,7 @@ describe('buildTools', () => {
             getLocalTimeZone: sinon.stub().returns('Europe/Berlin'),
         });
         const result = await buildTools({}).execute('getPeriodTotal', { sourceId: 'meter.0.daily', periods: [{ dayOffset: -1 }] });
-        expect(result.periods[0]).to.deep.equal({ start: 1000, end: 87400000, total: 7 });
+        expect(result.periods[0]).to.include({ start: 1000, end: 87400000, total: 7, quality: 'ok' });
         expect(boundaries.calledOnce).to.equal(true);
     });
 
@@ -530,10 +554,10 @@ describe('buildTools', () => {
 
 describe('getSelfConsumption', () => {
     function pvEntry(overrides = {}) {
-        return { sourceId: 'pv.0.total', historyInstance: 'history.0', description: 'PV-Erzeugung', room: 'Dach', valueKind: 'cumulative_total', derivedMetricRole: 'pv_generation', derivedMetricGroupId: 'pv-1', ...overrides };
+        return { sourceId: 'pv.0.total', historyInstance: 'history.0', description: 'PV-Erzeugung', room: 'Dach', valueKind: 'cumulative_total', unit: 'kWh', derivedMetricRole: 'pv_generation', derivedMetricGroupId: 'pv-1', ...overrides };
     }
     function feedInEntry(overrides = {}) {
-        return { sourceId: 'grid.0.feedin', historyInstance: 'history.0', description: 'Netzeinspeisung', valueKind: 'cumulative_total', derivedMetricRole: 'grid_feed_in', derivedMetricGroupId: 'pv-1', ...overrides };
+        return { sourceId: 'grid.0.feedin', historyInstance: 'history.0', description: 'Netzeinspeisung', valueKind: 'cumulative_total', unit: 'kWh', derivedMetricRole: 'grid_feed_in', derivedMetricGroupId: 'pv-1', ...overrides };
     }
 
     it('computes the self-consumption ratio for the single available group', async () => {

@@ -16,7 +16,7 @@ const { startProactiveScheduler } = require('./lib/scheduler');
 const { ensureUsageState, recordUsage, isBudgetExceeded, refreshTodaySummary } = require('./lib/usage');
 const adminCommands = require('./lib/adminCommands');
 const adminBridge = require('./lib/adminBridge');
-const { buildTimeAndLocationContext } = require('./lib/promptContext');
+const { buildTimeAndLocationContext, resolveTimeZone } = require('./lib/promptContext');
 const { classifyValueKind } = require('./lib/valueKindClassifier');
 const { classifyDataQuality } = require('./lib/dataQualityClassifier');
 const { findAnomalyCandidates, isEligibleCatalogEntry } = require('./lib/anomalyDetector');
@@ -39,6 +39,7 @@ const VALUE_KIND_BACKFILL_BATCH_SIZE = 20;
 const DATA_QUALITY_BACKFILL_BATCH_SIZE = 20;
 const CATALOG_SYNC_STATE = 'catalogSync';
 const CHAT_PROGRESS_STATE = 'chatProgress';
+const TIME_ZONE_STATE = 'info.timeZone';
 const MAX_CHAT_QUESTION_LENGTH = 16000;
 const MAX_TIMER_MS = 2147483647;
 
@@ -292,6 +293,7 @@ class AiAnalytics extends utils.Adapter {
     }
 
     async initializeRuntime() {
+        await this.ensureTimeZoneState();
         await ensureChatHistoryState(this);
         await ensureUsageState(this);
         await refreshTodaySummary(this);
@@ -385,6 +387,22 @@ class AiAnalytics extends utils.Adapter {
         this.licenseRenewalTimer = setInterval(() => this.renewLicense().catch(() => {}), licenseBackend.RENEWAL_CHECK_INTERVAL_MS);
 
         this.log.info('ai-analytics adapter ready');
+    }
+
+    async ensureTimeZoneState() {
+        const systemConfig = await this.getForeignObjectAsync('system.config').catch(() => null);
+        const resolution = resolveTimeZone({
+            configuredTimeZone: this.config.timeZone,
+            systemTimeZone: systemConfig && systemConfig.common && systemConfig.common.timeZone,
+        });
+        this.aiAnalyticsTimeZone = resolution.effectiveTimeZone;
+        await this.setObjectNotExistsAsync(TIME_ZONE_STATE, {
+            type: 'state',
+            common: { name: 'Effective timezone diagnostics', type: 'string', role: 'json', read: true, write: false },
+            native: {},
+        });
+        await this.setStateAsync(TIME_ZONE_STATE, { val: JSON.stringify(resolution), ack: true });
+        resolution.warnings.forEach(warning => this.log.warn(`Zeitzonenprüfung: ${warning}`));
     }
 
     async syncCatalog(options = {}) {
@@ -832,10 +850,17 @@ class AiAnalytics extends utils.Adapter {
                     '(reason: "energy_balance_deviation" — PV-Erzeugung, Netzbezug, Netzeinspeisung, Batterie und Verbrauch einer ' +
                     'Energie-Gruppe ergeben in Summe nicht die erwartete Bilanz). ' +
                     'Zeitangaben fuer getHistory/compareTimeframes sind IMMER Unix-Millisekunden relativ zur oben genannten aktuellen Zeit. ' +
-                    'Bevorzuge getPeriodTotal/comparePeriods, sobald fuer ein Objekt ein valueKind bekannt ist (siehe listCatalog), ' +
-                    'da diese automatisch die passende Rechenoperation fuer Momentanwerte, Zaehler und Schalter anwenden. ' +
+                      'Bevorzuge getPeriodTotal/comparePeriods, sobald fuer ein Objekt ein valueKind bekannt ist (siehe listCatalog), ' +
+                      'da diese automatisch die passende Rechenoperation fuer Momentanwerte, Zaehler und Schalter anwenden. ' +
+                      'Summiere niemals Rohwerte eines Tageszaehlers. Bei daily_reset_counter ist der Wert das Maximum des Segments nach dem letzten Reset; ' +
+                      'bei cumulative_total ist der Tageswert die Summe positiver Zaehlerdifferenzen mit Reset-Segmentierung. ' +
+                      'Berichte quality und erkannte Resets und verschweige Unsicherheiten nicht. Verwende fuer "gestern" den vollstaendigen lokalen Kalendertag; ' +
+                      'Pruefe vor der Rechnung die Einheit: Energiezaehler muessen Wh oder kWh, Leistungsrollen W oder kW haben. ' +
+                      'Nutze sourceUnit, normalizedUnit und conversionFactor aus dem Werkzeug; rate fehlende oder unbekannte Einheiten nicht. ' +
+                      'Verwende fuer grid_power oder battery_power getPeriodEnergy statt Rohwerte zu addieren; uebersprungene Intervalle und quality=gaps/uncertain muessen genannt werden. ' +
                      'Nutze in deiner Antwort IMMER die "description" aus den Werkzeug-Ergebnissen (getHistory/compareTimeframes) statt der rohen sourceId, damit die Ausgabe fuer den Nutzer lesbar ist. ' +
                      'Falls getPeriodTotal/comparePeriods ein Objekt mit dataCompleteness "gaps" oder "stale" liefern, benenne diese Unsicherheit in deiner Antwort statt sie zu verschweigen. ' +
+                     'Energiebilanz-Kandidaten mit dataCompleteness "gaps" enthalten kein belastbares aktuelles Residuum; nenne qualityReasons und melde fehlende Daten statt einer numerischen Abweichung. ' +
                      'Bei einem Objekt mit derivedMetricRole "grid_power" oder "battery_power" (Momentanleistung, kein Zaehler) ' +
                      'liefert getPeriodTotal/comparePeriods min/max als Spitzenlast in beide Richtungen; ohne derivedMetricInverted (Standard) ' +
                      'ist bei grid_power positiv = Netzbezug/negativ = Einspeisung, bei battery_power positiv = Laden/negativ = Entladen — ' +
@@ -921,8 +946,14 @@ class AiAnalytics extends utils.Adapter {
                 timeAndLocation +
                 'Du beantwortest Fragen zu Smart-Home-Verbrauchsdaten anhand der katalogisierten Objekte. ' +
                 'Zeitangaben fuer getHistory/compareTimeframes sind IMMER Unix-Millisekunden relativ zur oben genannten aktuellen Zeit. ' +
-                'Bevorzuge getPeriodTotal/comparePeriods, sobald fuer ein Objekt ein valueKind bekannt ist (siehe listCatalog), ' +
-                'da diese automatisch die passende Rechenoperation fuer Momentanwerte, Zaehler und Schalter anwenden. ' +
+                 'Bevorzuge getPeriodTotal/comparePeriods, sobald fuer ein Objekt ein valueKind bekannt ist (siehe listCatalog), ' +
+                 'da diese automatisch die passende Rechenoperation fuer Momentanwerte, Zaehler und Schalter anwenden. ' +
+                  'Summiere niemals Rohwerte eines Tageszaehlers. Bei daily_reset_counter ist der Wert das Maximum des Segments nach dem letzten Reset; ' +
+                  'bei cumulative_total ist der Tageswert die Summe positiver Zaehlerdifferenzen mit Reset-Segmentierung. ' +
+                  'Berichte quality und erkannte Resets und verschweige Unsicherheiten nicht. Verwende fuer "gestern" den vollstaendigen lokalen Kalendertag; ' +
+                  'Pruefe vor der Rechnung die Einheit: Energiezaehler muessen Wh oder kWh, Leistungsrollen W oder kW haben. ' +
+                  'Nutze sourceUnit, normalizedUnit und conversionFactor aus dem Werkzeug; rate fehlende oder unbekannte Einheiten nicht. ' +
+                  'Verwende fuer grid_power oder battery_power getPeriodEnergy statt Rohwerte zu addieren; uebersprungene Intervalle und quality=gaps/uncertain muessen genannt werden. ' +
                  'Nutze in deiner Antwort IMMER die "description" aus den Werkzeug-Ergebnissen (getHistory/compareTimeframes) statt der rohen sourceId, damit die Ausgabe fuer den Nutzer lesbar ist. ' +
                  'Falls getPeriodTotal/comparePeriods ein Objekt mit dataCompleteness "gaps" oder "stale" liefern, benenne diese Unsicherheit in deiner Antwort statt sie zu verschweigen. ' +
                  'Bei einem Objekt mit derivedMetricRole "grid_power" oder "battery_power" (Momentanleistung, kein Zaehler) ' +

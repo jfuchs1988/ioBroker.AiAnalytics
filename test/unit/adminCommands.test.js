@@ -170,6 +170,23 @@ describe('adminCommands', () => {
             });
         });
 
+        it('updates and validates the plausible cumulative rate', async () => {
+            const existing = { sourceId: 'javascript.0.x', category: 'consumption', needsReview: false, active: true };
+            const setCatalogEntry = sinon.stub().resolves();
+            const { updateCatalogEntryAdmin } = loadAdminCommandsWithStubs({ getAllCatalogEntries: sinon.stub().resolves([existing]), setCatalogEntry });
+
+            const result = await updateCatalogEntryAdmin({}, { sourceId: existing.sourceId, maxPlausibleKwhPerHour: 42 });
+            expect(result.entry.maxPlausibleKwhPerHour).to.equal(42);
+            let error;
+            try {
+                await updateCatalogEntryAdmin({}, { sourceId: existing.sourceId, maxPlausibleKwhPerHour: 0 });
+            } catch (caught) {
+                error = caught;
+            }
+            expect(error).to.be.an('error');
+            expect(error.message).to.include('positiv');
+        });
+
     it('leaves valueKind untouched when not provided', async () => {
             const existing = { sourceId: 'javascript.0.x', category: 'lighting', valueKind: 'gauge', valueKindSource: 'sampled' };
             const setCatalogEntry = sinon.stub().resolves();

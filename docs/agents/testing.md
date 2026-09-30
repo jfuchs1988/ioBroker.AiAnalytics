@@ -33,7 +33,13 @@ npx vitest run test/admin/<name>.test.jsx
   **nicht** in `npm test` (dauert
   Minuten, braucht Netzzugriff für die js-controller-Installation) und macht
   bewusst keinen LLM-Provider-Aufruf (kein `apiKey` konfiguriert). Manueller
-  Pre-Release-Schritt, siehe `CONTRIBUTING.md`.
+ Pre-Release-Schritt, siehe `CONTRIBUTING.md`.
+- Der reproduzierbare manuelle Live-Test gegen eine echte Admin-Oberfläche und
+  echte InfluxDB-Referenzdaten ist in
+  `docs/agents/live-history-testing.md` beschrieben. Er verwendet Chrome-CDP,
+  die authentifizierte InfluxDB-HTTP-API nur lesend und die ioBroker-
+  `getHistory`-Schnittstelle. Ergebnisse werden mit unabhängig berechneten
+  Referenzwerten verglichen; der Ablauf ist kein CI-Test.
 - Neue Verhaltensänderungen beginnen mit einem reproduzierenden roten Test.
 - Fehlerpfade, Grenzen und ungültige persistierte Daten gehören zu jedem
   relevanten Vertrag.

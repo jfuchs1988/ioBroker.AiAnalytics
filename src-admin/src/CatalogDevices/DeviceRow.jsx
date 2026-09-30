@@ -10,6 +10,7 @@ const DATA_COMPLETENESS = ['unknown', 'complete', 'gaps', 'stale'];
 const MAX_DESCRIPTION_LENGTH = 2000;
 const MAX_ROOM_LENGTH = 256;
 const MAX_UNIT_LENGTH = 64;
+const MAX_PLAUSIBLE_RATE = 1000000;
 const FIELD_OK_TIMEOUT_MS = 3000;
 
 function statusLabelOf(entry) {
@@ -26,6 +27,7 @@ export default class DeviceRow extends React.Component {
             description: props.entry.description || '',
             room: props.entry.room || '',
             unit: props.entry.unit || '',
+            maxPlausibleKwhPerHour: props.entry.maxPlausibleKwhPerHour == null ? '' : String(props.entry.maxPlausibleKwhPerHour),
             fieldErrors: {},
             fieldOk: {},
             pendingRole: undefined,
@@ -39,6 +41,7 @@ export default class DeviceRow extends React.Component {
                 description: this.props.entry.description || '',
                 room: this.props.entry.room || '',
                 unit: this.props.entry.unit || '',
+                maxPlausibleKwhPerHour: this.props.entry.maxPlausibleKwhPerHour == null ? '' : String(this.props.entry.maxPlausibleKwhPerHour),
                 pendingRole: undefined,
             });
         }
@@ -105,6 +108,17 @@ export default class DeviceRow extends React.Component {
         const value = this.state[field].slice(0, maxLength);
         if (value === (this.props.entry[field] || '')) return;
         this.save({ [field]: value });
+    }
+
+    handleRateBlur() {
+        const raw = this.state.maxPlausibleKwhPerHour.trim();
+        if (raw === '') {
+            if (this.props.entry.maxPlausibleKwhPerHour !== undefined) this.save({ maxPlausibleKwhPerHour: '' });
+            return;
+        }
+        const value = Number(raw);
+        if (!Number.isFinite(value) || value <= 0 || value > MAX_PLAUSIBLE_RATE) return;
+        if (value !== this.props.entry.maxPlausibleKwhPerHour) this.save({ maxPlausibleKwhPerHour: value });
     }
 
     handleRoleChange(nextRole) {
@@ -241,6 +255,10 @@ export default class DeviceRow extends React.Component {
                                         {DATA_COMPLETENESS.map(item => <option key={item} value={item}>{item}</option>)}
                                     </select>
                                     {fieldErrors.dataCompleteness ? <span role="alert">{fieldErrors.dataCompleteness}</span> : null}
+                                </label>
+                                <label>
+                                    Max. Zähleranstieg (kWh/h){' '}
+                                    <input aria-label={`Maximal plausibler Zähleranstieg für ${entry.sourceId}`} type="number" min="0" max={MAX_PLAUSIBLE_RATE} step="any" value={this.state.maxPlausibleKwhPerHour} onChange={event => this.setState({ maxPlausibleKwhPerHour: event.target.value })} onBlur={() => this.handleRateBlur()} />
                                 </label>
                                 <label>
                                     Energie-Rolle{' '}
