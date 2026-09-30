@@ -49,6 +49,10 @@
     "vite-plugin-commonjs": "^0.10.4",
     "vitest": "^5.0.1"
   },
+  "overrides": {
+    "@module-federation/dts-plugin": "2.9.2",
+    "esbuild": "0.25.12"
+  },
   "scripts": {
     "build:admin": "vite build --config src-admin/vite.config.mjs",
     "check:release": "node scripts/check-release-metadata.js",
