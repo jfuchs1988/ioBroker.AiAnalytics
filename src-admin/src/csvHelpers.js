@@ -110,5 +110,7 @@ export function validateCatalogImportValue(field, value) {
     if (field === 'hvacRole' && !HVAC_ROLES.includes(value)) throw new Error(`Ungültige hvacRole: ${value}`);
     if (field === 'updateFrequency' && !UPDATE_FREQUENCIES.includes(value)) throw new Error(`Ungültige updateFrequency: ${value}`);
     if (field === 'dataCompleteness' && !DATA_COMPLETENESS.includes(value)) throw new Error(`Ungültige dataCompleteness: ${value}`);
+    if (field === 'maxPlausibleKwhPerHour' && value !== '' && (!Number.isFinite(Number(value)) || Number(value) <= 0)) throw new Error(`Ungültiger maxPlausibleKwhPerHour: ${value}`);
+    if (field === 'maxPlausibleKwhPerHour') return value === '' ? '' : Number(value);
     return (field === 'ignored' || field === 'derivedMetricInverted') ? parseBoolean(value, field) : value;
 }

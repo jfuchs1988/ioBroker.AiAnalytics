@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
-const { buildTimeAndLocationContext, getLocalDayBoundaries, shiftLocalCalendarDay } = require('../../lib/promptContext');
+const { buildTimeAndLocationContext, getLocalDayBoundaries, shiftLocalCalendarDay, resolveTimeZone } = require('../../lib/promptContext');
 
 describe('buildTimeAndLocationContext', () => {
     const now = new Date('2026-08-24T11:58:00.000Z');
@@ -120,5 +120,27 @@ describe('shiftLocalCalendarDay', () => {
         const shifted = shiftLocalCalendarDay(noon, -1, 'Europe/Berlin');
 
         expect(new Date(shifted).toISOString()).to.equal('2026-03-29T12:00:00.000Z');
+    });
+});
+
+describe('resolveTimeZone', () => {
+    it('prefers a valid explicit adapter override and reports disagreement with ioBroker/host', () => {
+        const result = resolveTimeZone({ configuredTimeZone: 'Europe/Berlin', systemTimeZone: 'UTC', processTimeZone: 'UTC' });
+        expect(result.effectiveTimeZone).to.equal('Europe/Berlin');
+        expect(result.source).to.equal('adapter');
+        expect(result.warnings).to.have.length.greaterThan(0);
+    });
+
+    it('uses ioBroker system timezone before process timezone when no override is set', () => {
+        const result = resolveTimeZone({ systemTimeZone: 'Europe/Berlin', processTimeZone: 'UTC' });
+        expect(result.effectiveTimeZone).to.equal('Europe/Berlin');
+        expect(result.source).to.equal('system.config');
+    });
+
+    it('falls back from invalid zones and reports them', () => {
+        const result = resolveTimeZone({ configuredTimeZone: 'Not/AZone', systemTimeZone: 'also-invalid', processTimeZone: 'UTC' });
+        expect(result.effectiveTimeZone).to.equal('UTC');
+        expect(result.source).to.equal('process');
+        expect(result.warnings).to.have.length(2);
     });
 });
