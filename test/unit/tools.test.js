@@ -28,6 +28,7 @@ describe('buildTools', () => {
             'getHistory',
             'compareTimeframes',
             'getPeriodTotal',
+            'getPeriodEnergy',
             'comparePeriods',
             'getSelfConsumption',
             'updateCatalogEntry',
@@ -454,6 +455,27 @@ describe('buildTools', () => {
         expect(result.periods[0]).to.include({ start: 0, end: 10, total: 8, quality: 'ok' });
         expect(result.periods[0].resets).to.deep.equal([3]);
         expect(getHistory.calledOnceWith({}, 'influxdb.0', 'meter.0.daily', 0, 10, 'minmax')).to.equal(true);
+    });
+
+    it('integrates a power role and reports long gaps', async () => {
+        const getHistory = sinon.stub().resolves([
+            { ts: 0, val: 6000 },
+            { ts: 10 * 60 * 1000, val: 6000 },
+            { ts: 10 * 60 * 1000 + 16 * 60 * 1000, val: 6000 },
+        ]);
+        const { buildTools } = loadToolsWithStubs({
+            getAllCatalogEntries: sinon.stub().resolves([{
+                sourceId: 'meter.0.power', historyInstance: 'influxdb.0', description: 'Netzleistung', unit: 'W',
+                valueKind: 'gauge', derivedMetricRole: 'grid_power',
+            }]),
+            getHistory,
+        });
+
+        const result = await buildTools({}).execute('getPeriodEnergy', { sourceId: 'meter.0.power', periods: [{ start: 0, end: 7200000 }] });
+
+        expect(result.normalizedUnit).to.equal('kW');
+        expect(result.periods[0]).to.include({ importKwh: 1, quality: 'gaps', integratedIntervals: 1, skippedIntervals: 1 });
+        expect(getHistory.calledOnceWith({}, 'influxdb.0', 'meter.0.power', 0, 7200000, 'none')).to.equal(true);
     });
 
     it('includes data-quality fields in getPeriodTotal results, with unknown fallback', async () => {

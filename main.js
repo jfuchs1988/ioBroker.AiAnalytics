@@ -839,6 +839,7 @@ class AiAnalytics extends utils.Adapter {
                       'Berichte quality und erkannte Resets und verschweige Unsicherheiten nicht. Verwende fuer "gestern" den vollstaendigen lokalen Kalendertag; ' +
                       'Pruefe vor der Rechnung die Einheit: Energiezaehler muessen Wh oder kWh, Leistungsrollen W oder kW haben. ' +
                       'Nutze sourceUnit, normalizedUnit und conversionFactor aus dem Werkzeug; rate fehlende oder unbekannte Einheiten nicht. ' +
+                      'Verwende fuer grid_power oder battery_power getPeriodEnergy statt Rohwerte zu addieren; uebersprungene Intervalle und quality=gaps/uncertain muessen genannt werden. ' +
                      'Nutze in deiner Antwort IMMER die "description" aus den Werkzeug-Ergebnissen (getHistory/compareTimeframes) statt der rohen sourceId, damit die Ausgabe fuer den Nutzer lesbar ist. ' +
                      'Falls getPeriodTotal/comparePeriods ein Objekt mit dataCompleteness "gaps" oder "stale" liefern, benenne diese Unsicherheit in deiner Antwort statt sie zu verschweigen. ' +
                      'Bei einem Objekt mit derivedMetricRole "grid_power" oder "battery_power" (Momentanleistung, kein Zaehler) ' +
@@ -933,6 +934,7 @@ class AiAnalytics extends utils.Adapter {
                   'Berichte quality und erkannte Resets und verschweige Unsicherheiten nicht. Verwende fuer "gestern" den vollstaendigen lokalen Kalendertag; ' +
                   'Pruefe vor der Rechnung die Einheit: Energiezaehler muessen Wh oder kWh, Leistungsrollen W oder kW haben. ' +
                   'Nutze sourceUnit, normalizedUnit und conversionFactor aus dem Werkzeug; rate fehlende oder unbekannte Einheiten nicht. ' +
+                  'Verwende fuer grid_power oder battery_power getPeriodEnergy statt Rohwerte zu addieren; uebersprungene Intervalle und quality=gaps/uncertain muessen genannt werden. ' +
                  'Nutze in deiner Antwort IMMER die "description" aus den Werkzeug-Ergebnissen (getHistory/compareTimeframes) statt der rohen sourceId, damit die Ausgabe fuer den Nutzer lesbar ist. ' +
                  'Falls getPeriodTotal/comparePeriods ein Objekt mit dataCompleteness "gaps" oder "stale" liefern, benenne diese Unsicherheit in deiner Antwort statt sie zu verschweigen. ' +
                  'Bei einem Objekt mit derivedMetricRole "grid_power" oder "battery_power" (Momentanleistung, kein Zaehler) ' +
