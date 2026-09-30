@@ -10,6 +10,10 @@ const BRIDGE_TIMEOUT_SLOW_MS = 300000;
 const SLOW_COMMANDS = ['chatQuestion', 'runDiscoveryNow', 'runProactiveCheckNow'];
 const BUDGET_REFRESH_INTERVAL_MS = 20000;
 const THINKING_POLL_INTERVAL_MS = 400;
+const GITHUB_ISSUE_URL = 'https://github.com/jfuchs1988/ioBroker.ai-analytics/issues/new';
+const DIAGNOSTIC_TEXT_MAX_LENGTH = 1200;
+const DIAGNOSTIC_BODY_MAX_LENGTH = 12000;
+const diagnosticErrors = [];
 
 function formatMessageLine(entry) {
     return `[${entry.role}] ${entry.text}`;
@@ -29,6 +33,61 @@ function formatUsageLine(entry, prices = {}) {
     const calculatedCost = (usage.inputTokens * inputPrice + usage.outputTokens * outputPrice) / 1000000;
     const cost = inputPrice > 0 || outputPrice > 0 ? ` · Kosten: ${formatEuroAmount(calculatedCost, 6)}` : '';
     return `Verbrauch: ${format.format(total)} Tokens (Input ${format.format(usage.inputTokens)}, Output ${format.format(usage.outputTokens)})${cost}`;
+}
+
+function redactDiagnosticText(value, maxLength = DIAGNOSTIC_TEXT_MAX_LENGTH) {
+    return String(value || '')
+        .replace(/(?:bearer\s+|api[_-]?key\s*[:=]\s*|licenseToken\s*[:=]\s*)[^\s,;]+/gi, '<redacted-secret>')
+        .replace(/https?:\/\/[^\s)]+/gi, '<redacted-url>')
+        .replace(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g, '<redacted-ip>')
+        .replace(/\b[A-Za-z_][A-Za-z0-9_-]*\.\d+\.[A-Za-z0-9_.:-]+\b/g, '<redacted-object>')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, maxLength);
+}
+
+function redactChatExcerpt(value, maxLength = 900) {
+    return redactDiagnosticText(value, maxLength).replace(/\b\d+(?:[.,]\d+)?\b/g, '<redacted-number>');
+}
+
+function buildDiagnosticPayload({ report = {}, runtime = {}, errors = [] } = {}) {
+    return {
+        schema: 'ioBroker.ai-analytics-diagnostic/v1',
+        collectedAt: new Date().toISOString(),
+        report: {
+            summary: redactDiagnosticText(report.summary),
+            steps: redactDiagnosticText(report.steps),
+            expected: redactDiagnosticText(report.expected),
+            actual: redactDiagnosticText(report.actual),
+        },
+        runtime: {
+            adapterVersion: redactDiagnosticText(runtime.adapterVersion, 64),
+            nodeVersion: redactDiagnosticText(runtime.nodeVersion, 64),
+            controllerVersion: redactDiagnosticText(runtime.controllerVersion, 64),
+            browser: redactDiagnosticText(runtime.browser, 160),
+            chatProviderReachable: runtime.chatProviderReachable === true,
+            onboardingProviderReachable: runtime.onboardingProviderReachable === true,
+        },
+        errors: errors.slice(-5).map((error) => redactDiagnosticText(error, 600)).filter(Boolean),
+    };
+}
+
+function buildGitHubIssueUrl(payload) {
+    const titleText = payload && payload.report && payload.report.summary ? payload.report.summary : 'Fehlerbericht aus ioBroker';
+    const title = `[Bug] ${redactDiagnosticText(titleText, 100).replace(/[\r\n]+/g, ' ')}`;
+    const body = `## Fehlerbeschreibung\n\n${payload.report.summary || '(keine Angabe)'}\n\n` +
+        `## Reproduktion\n\n${payload.report.steps || '(keine Angabe)'}\n\n` +
+        `## Erwartet\n\n${payload.report.expected || '(keine Angabe)'}\n\n` +
+        `## Tatsächlich\n\n${payload.report.actual || '(keine Angabe)'}\n\n` +
+        `## Redigierte Diagnosedaten\n\n\`\`\`json\n${JSON.stringify(payload, null, 2)}\n\`\`\``;
+    const boundedBody = body.slice(0, DIAGNOSTIC_BODY_MAX_LENGTH);
+    return `${GITHUB_ISSUE_URL}?labels=bug&title=${encodeURIComponent(title)}&body=${encodeURIComponent(boundedBody)}`;
+}
+
+function recordDiagnosticError(error) {
+    const text = redactDiagnosticText(error && error.message ? error.message : error);
+    if (text) diagnosticErrors.push(text);
+    if (diagnosticErrors.length > 10) diagnosticErrors.shift();
 }
 
 function escapeHtml(value) {
@@ -195,7 +254,7 @@ function renderHistory(history, prices = budgetPrices) {
     chatHistory = history || [];
     const container = document.getElementById('chat-messages');
     container.innerHTML = '';
-    (history || []).forEach((entry) => {
+    (history || []).forEach((entry, index) => {
         const line = document.createElement('div');
         line.className = `chat-message chat-message-${entry.role}`;
         const bubble = document.createElement('div');
@@ -213,12 +272,21 @@ function renderHistory(history, prices = budgetPrices) {
             usageLine.textContent = usage;
             line.appendChild(usageLine);
         }
+        if (entry.role === 'assistant') {
+            const reportButton = document.createElement('button');
+            reportButton.type = 'button';
+            reportButton.className = 'chat-report-button range-btn';
+            reportButton.textContent = 'Fehler melden';
+            reportButton.addEventListener('click', () => openChatMessageReport(entry, history[index - 1]));
+            line.appendChild(reportButton);
+        }
         container.appendChild(line);
     });
     container.scrollTop = container.scrollHeight;
 }
 
 function showConnectionError(message) {
+    recordDiagnosticError(message);
     const container = document.getElementById('chat-messages');
     if (container) {
         container.textContent = message;
@@ -532,6 +600,7 @@ function loadHistory() {
 }
 
 function appendChatError(message) {
+    recordDiagnosticError(message);
     const container = document.getElementById('chat-messages');
     if (!container) return;
     const line = document.createElement('div');
@@ -542,6 +611,100 @@ function appendChatError(message) {
     line.appendChild(bubble);
     container.appendChild(line);
     container.scrollTop = container.scrollHeight;
+}
+
+function openChatMessageReport(assistantEntry, userEntry) {
+    const summary = document.getElementById('diagnostic-report-summary');
+    const steps = document.getElementById('diagnostic-report-steps');
+    const actual = document.getElementById('diagnostic-report-actual');
+    if (summary) summary.value = 'Fehler in einer Chat-Antwort';
+    if (steps) steps.value = `Frage: ${redactChatExcerpt(userEntry && userEntry.text) || '(nicht verfügbar)'}`;
+    if (actual) actual.value = `Antwort: ${redactChatExcerpt(assistantEntry && assistantEntry.text) || '(nicht verfügbar)'}`;
+    openDiagnosticReport();
+}
+
+function getSocketState(stateId) {
+    return new Promise((resolve) => {
+        socket.emit('getState', stateId, (error, state) => resolve(error ? null : state));
+    });
+}
+
+function getSocketObject(objectId) {
+    return new Promise((resolve) => {
+        socket.emit('getObject', objectId, (error, object) => resolve(error ? null : object));
+    });
+}
+
+async function collectDiagnosticRuntime() {
+    const [instance, chatHealth, onboardingHealth] = await Promise.all([
+        getSocketObject(`system.adapter.${namespace}`),
+        getSocketState(`${namespace}.info.chatProviderReachable`),
+        getSocketState(`${namespace}.info.onboardingProviderReachable`),
+    ]);
+    const native = instance && instance.native ? instance.native : {};
+    return {
+        adapterVersion: instance && instance.common ? instance.common.version : 'unknown',
+        nodeVersion: 'not exposed in browser',
+        controllerVersion: 'not exposed in browser',
+        browser: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+        chatProviderReachable: Boolean(chatHealth && chatHealth.val === true),
+        onboardingProviderReachable: Boolean(onboardingHealth && onboardingHealth.val === true),
+        providerTypesPresent: Boolean(native.chatProviderType || native.onboardingProviderType),
+    };
+}
+
+function reportFieldValue(id) {
+    const element = document.getElementById(id);
+    return element ? element.value : '';
+}
+
+async function openDiagnosticReport() {
+    const modal = document.getElementById('diagnostic-report-modal');
+    const preview = document.getElementById('diagnostic-report-preview');
+    if (!modal || !preview) return;
+    modal.hidden = false;
+    preview.value = 'Diagnosedaten werden gesammelt ...';
+    try {
+        const payload = buildDiagnosticPayload({
+            report: {
+                summary: reportFieldValue('diagnostic-report-summary'),
+                steps: reportFieldValue('diagnostic-report-steps'),
+                expected: reportFieldValue('diagnostic-report-expected'),
+                actual: reportFieldValue('diagnostic-report-actual'),
+            },
+            runtime: await collectDiagnosticRuntime(),
+            errors: diagnosticErrors,
+        });
+        modal._diagnosticRuntime = payload.runtime;
+        preview.value = JSON.stringify(payload, null, 2);
+        modal._diagnosticPayload = payload;
+    } catch (error) {
+        recordDiagnosticError(error);
+        preview.value = 'Diagnosedaten konnten nicht gesammelt werden. Du kannst den Bericht trotzdem abbrechen.';
+    }
+}
+
+function closeDiagnosticReport() {
+    const modal = document.getElementById('diagnostic-report-modal');
+    if (modal) modal.hidden = true;
+}
+
+function openPreparedGitHubIssue() {
+    const modal = document.getElementById('diagnostic-report-modal');
+    if (!modal || !modal._diagnosticRuntime) return;
+    const payload = buildDiagnosticPayload({
+        report: {
+            summary: reportFieldValue('diagnostic-report-summary'),
+            steps: reportFieldValue('diagnostic-report-steps'),
+            expected: reportFieldValue('diagnostic-report-expected'),
+            actual: reportFieldValue('diagnostic-report-actual'),
+        },
+        runtime: modal._diagnosticRuntime,
+        errors: diagnosticErrors,
+    });
+    const preview = document.getElementById('diagnostic-report-preview');
+    if (preview) preview.value = JSON.stringify(payload, null, 2);
+    window.open(buildGitHubIssueUrl(payload), '_blank', 'noopener,noreferrer');
 }
 
 function appendChatEntry(role, text, timestamp = Date.now()) {
@@ -784,6 +947,9 @@ function init() {
     document.getElementById('budget-details-toggle').addEventListener('click', toggleBudgetDetails);
     document.getElementById('budget-range-30').addEventListener('click', showBudgetRange30);
     document.getElementById('budget-range-all').addEventListener('click', showBudgetRangeAll);
+    document.getElementById('report-bug').addEventListener('click', openDiagnosticReport);
+    document.getElementById('diagnostic-report-cancel').addEventListener('click', closeDiagnosticReport);
+    document.getElementById('diagnostic-report-open').addEventListener('click', openPreparedGitHubIssue);
     const budgetTimer = setInterval(loadBudget, BUDGET_REFRESH_INTERVAL_MS);
     window.addEventListener('pagehide', () => {
         clearInterval(budgetTimer);
@@ -811,5 +977,9 @@ if (typeof module !== 'undefined') {
         extractChatHistory,
         markdownToHtml,
         formatUsageLine,
+        redactDiagnosticText,
+        redactChatExcerpt,
+        buildDiagnosticPayload,
+        buildGitHubIssueUrl,
     };
 }

@@ -7,6 +7,11 @@
         body { font-family: sans-serif; margin: 0; }
         .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
         #nav { display: flex; gap: 4px; padding: 8px; border-bottom: 1px solid #ddd; align-items: center; }
+        #report-bug { margin-left: auto; }
+        #diagnostic-report-modal { position: fixed; inset: 5vh 5vw; z-index: 1000; background: #fff; color: #222; border: 1px solid #888; border-radius: 8px; padding: 16px; box-shadow: 0 8px 32px #0006; overflow: auto; }
+        #diagnostic-report-modal textarea { width: 100%; min-height: 70px; box-sizing: border-box; margin: 4px 0 10px; }
+        #diagnostic-report-preview { min-height: 220px; font-family: monospace; }
+        .diagnostic-report-actions { display: flex; gap: 8px; justify-content: flex-end; }
         #budget-summary-bar { font-size: 13px; color: #333; padding: 4px 8px; }
         #chat-messages { height: 70vh; overflow-y: auto; padding: 12px; box-sizing: border-box; }
         .chat-message { display: flex; flex-direction: column; margin-bottom: 8px; }
@@ -24,6 +29,7 @@
         .chat-message-assistant .chat-bubble { background: #eee; color: #222; }
         .chat-timestamp { font-size: 11px; color: #888; margin-top: 2px; }
         .chat-usage { font-size: 11px; color: #888; margin-top: 2px; }
+        .chat-report-button { font-size: 11px; margin-top: 2px; }
         #chat-input-row { display: flex; padding: 8px; border-top: 1px solid #ddd; }
         #chat-input { flex: 1; padding: 8px; }
         #chat-send { padding: 8px 16px; margin-left: 8px; }
@@ -53,6 +59,26 @@
     <div id="nav">
         <span id="budget-summary-bar">Lade Budget...</span>
         <button id="budget-details-toggle" class="range-btn">Details</button>
+        <button id="report-bug" class="range-btn">Fehler melden</button>
+    </div>
+
+    <div id="diagnostic-report-modal" hidden role="dialog" aria-modal="true" aria-labelledby="diagnostic-report-title">
+        <h2 id="diagnostic-report-title">Fehlerbericht vorbereiten</h2>
+        <p>Es werden nur redigierte Diagnosedaten übernommen. Prüfe den Bericht vor dem Öffnen von GitHub. Nichts wird automatisch veröffentlicht.</p>
+        <label for="diagnostic-report-summary">Kurzbeschreibung</label>
+        <textarea id="diagnostic-report-summary" placeholder="Was ist passiert?"></textarea>
+        <label for="diagnostic-report-steps">Reproduktionsschritte</label>
+        <textarea id="diagnostic-report-steps" placeholder="1. ...&#10;2. ..."></textarea>
+        <label for="diagnostic-report-expected">Erwartetes Verhalten</label>
+        <textarea id="diagnostic-report-expected"></textarea>
+        <label for="diagnostic-report-actual">Tatsächliches Verhalten</label>
+        <textarea id="diagnostic-report-actual"></textarea>
+        <label for="diagnostic-report-preview">Vorschau (bearbeitbar)</label>
+        <textarea id="diagnostic-report-preview" readonly></textarea>
+        <div class="diagnostic-report-actions">
+            <button id="diagnostic-report-cancel" class="range-btn">Abbrechen</button>
+            <button id="diagnostic-report-open" class="range-btn">GitHub-Entwurf öffnen</button>
+        </div>
     </div>
 
     <div id="budget-details" hidden>

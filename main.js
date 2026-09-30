@@ -832,8 +832,13 @@ class AiAnalytics extends utils.Adapter {
                     '(reason: "energy_balance_deviation" — PV-Erzeugung, Netzbezug, Netzeinspeisung, Batterie und Verbrauch einer ' +
                     'Energie-Gruppe ergeben in Summe nicht die erwartete Bilanz). ' +
                     'Zeitangaben fuer getHistory/compareTimeframes sind IMMER Unix-Millisekunden relativ zur oben genannten aktuellen Zeit. ' +
-                    'Bevorzuge getPeriodTotal/comparePeriods, sobald fuer ein Objekt ein valueKind bekannt ist (siehe listCatalog), ' +
-                    'da diese automatisch die passende Rechenoperation fuer Momentanwerte, Zaehler und Schalter anwenden. ' +
+                      'Bevorzuge getPeriodTotal/comparePeriods, sobald fuer ein Objekt ein valueKind bekannt ist (siehe listCatalog), ' +
+                      'da diese automatisch die passende Rechenoperation fuer Momentanwerte, Zaehler und Schalter anwenden. ' +
+                      'Summiere niemals Rohwerte eines Tageszaehlers. Bei daily_reset_counter ist der Wert das Maximum des Segments nach dem letzten Reset; ' +
+                      'bei cumulative_total ist der Tageswert die Summe positiver Zaehlerdifferenzen mit Reset-Segmentierung. ' +
+                      'Berichte quality und erkannte Resets und verschweige Unsicherheiten nicht. Verwende fuer "gestern" den vollstaendigen lokalen Kalendertag; ' +
+                      'Pruefe vor der Rechnung die Einheit: Energiezaehler muessen Wh oder kWh, Leistungsrollen W oder kW haben. ' +
+                      'Nutze sourceUnit, normalizedUnit und conversionFactor aus dem Werkzeug; rate fehlende oder unbekannte Einheiten nicht. ' +
                      'Nutze in deiner Antwort IMMER die "description" aus den Werkzeug-Ergebnissen (getHistory/compareTimeframes) statt der rohen sourceId, damit die Ausgabe fuer den Nutzer lesbar ist. ' +
                      'Falls getPeriodTotal/comparePeriods ein Objekt mit dataCompleteness "gaps" oder "stale" liefern, benenne diese Unsicherheit in deiner Antwort statt sie zu verschweigen. ' +
                      'Bei einem Objekt mit derivedMetricRole "grid_power" oder "battery_power" (Momentanleistung, kein Zaehler) ' +
@@ -921,8 +926,13 @@ class AiAnalytics extends utils.Adapter {
                 timeAndLocation +
                 'Du beantwortest Fragen zu Smart-Home-Verbrauchsdaten anhand der katalogisierten Objekte. ' +
                 'Zeitangaben fuer getHistory/compareTimeframes sind IMMER Unix-Millisekunden relativ zur oben genannten aktuellen Zeit. ' +
-                'Bevorzuge getPeriodTotal/comparePeriods, sobald fuer ein Objekt ein valueKind bekannt ist (siehe listCatalog), ' +
-                'da diese automatisch die passende Rechenoperation fuer Momentanwerte, Zaehler und Schalter anwenden. ' +
+                 'Bevorzuge getPeriodTotal/comparePeriods, sobald fuer ein Objekt ein valueKind bekannt ist (siehe listCatalog), ' +
+                 'da diese automatisch die passende Rechenoperation fuer Momentanwerte, Zaehler und Schalter anwenden. ' +
+                  'Summiere niemals Rohwerte eines Tageszaehlers. Bei daily_reset_counter ist der Wert das Maximum des Segments nach dem letzten Reset; ' +
+                  'bei cumulative_total ist der Tageswert die Summe positiver Zaehlerdifferenzen mit Reset-Segmentierung. ' +
+                  'Berichte quality und erkannte Resets und verschweige Unsicherheiten nicht. Verwende fuer "gestern" den vollstaendigen lokalen Kalendertag; ' +
+                  'Pruefe vor der Rechnung die Einheit: Energiezaehler muessen Wh oder kWh, Leistungsrollen W oder kW haben. ' +
+                  'Nutze sourceUnit, normalizedUnit und conversionFactor aus dem Werkzeug; rate fehlende oder unbekannte Einheiten nicht. ' +
                  'Nutze in deiner Antwort IMMER die "description" aus den Werkzeug-Ergebnissen (getHistory/compareTimeframes) statt der rohen sourceId, damit die Ausgabe fuer den Nutzer lesbar ist. ' +
                  'Falls getPeriodTotal/comparePeriods ein Objekt mit dataCompleteness "gaps" oder "stale" liefern, benenne diese Unsicherheit in deiner Antwort statt sie zu verschweigen. ' +
                  'Bei einem Objekt mit derivedMetricRole "grid_power" oder "battery_power" (Momentanleistung, kein Zaehler) ' +
