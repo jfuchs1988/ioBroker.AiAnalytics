@@ -51,9 +51,7 @@
   },
   "overrides": {
     "@module-federation/dts-plugin": "2.9.2",
-    "@alcalzone/esbuild-register": {
-      "esbuild": "^0.25.0"
-    }
+    "esbuild": "0.25.12"
   },
   "scripts": {
     "build:admin": "vite build --config src-admin/vite.config.mjs",

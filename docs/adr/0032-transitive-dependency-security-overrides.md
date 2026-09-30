@@ -16,8 +16,10 @@ TypeScript-Definitions-Plugin-Pfad auf eine ältere Version.
 Gepatchte, kompatible Paketversionen werden bevorzugt über Lockfile-Updates
 aktualisiert. `overrides` werden nur für konkret betroffene transitive
 Abhängigkeiten gesetzt und müssen Unit-, Admin-, Build- und E2E-Prüfungen
-bestehen. Ein Override, das API-/SemVer-Kompatibilität nicht nachweist, wird
-nicht behalten.
+bestehen. `esbuild` wird auf eine gepatchte exakte Version festgesetzt, weil
+npm 10 sonst beim `npm ci` den Lockfile-Eintrag nicht reproduziert. Das Override
+muss entfernt oder angepasst werden, sobald der abhängige E2E-Registrierer eine
+gepatchte Mindestversion deklariert.
 
 ## Konsequenzen
 
