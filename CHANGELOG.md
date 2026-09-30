@@ -3,6 +3,14 @@
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/), Versionierung nach [SemVer](https://semver.org/).
 
+## [0.1.15] - 2026-09-30
+
+### Sicherheit
+
+- Aktualisiert verwundbare transitive Abhängigkeiten (`moment`,
+  `serialize-javascript`, `brace-expansion`, `adm-zip`, `undici` und `esbuild`)
+  auf gepatchte Versionen; `npm audit` meldet keine Schwachstellen.
+
 ## [0.1.14] - 2026-09-30
 
 ### Behoben
