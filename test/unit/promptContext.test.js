@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
-const { buildTimeAndLocationContext, getLocalDayBoundaries } = require('../../lib/promptContext');
+const { buildTimeAndLocationContext, getLocalDayBoundaries, shiftLocalCalendarDay } = require('../../lib/promptContext');
 
 describe('buildTimeAndLocationContext', () => {
     const now = new Date('2026-08-24T11:58:00.000Z');
@@ -111,5 +111,14 @@ describe('getLocalDayBoundaries', () => {
 
         expect(new Date(start).toISOString()).to.equal('2026-08-21T00:00:00.000Z');
         expect(new Date(end).toISOString()).to.equal('2026-08-22T00:00:00.000Z');
+    });
+});
+
+describe('shiftLocalCalendarDay', () => {
+    it('moves across the spring DST transition by one local calendar day', () => {
+        const noon = Date.parse('2026-03-30T12:00:00Z');
+        const shifted = shiftLocalCalendarDay(noon, -1, 'Europe/Berlin');
+
+        expect(new Date(shifted).toISOString()).to.equal('2026-03-29T12:00:00.000Z');
     });
 });

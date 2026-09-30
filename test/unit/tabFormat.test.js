@@ -14,6 +14,10 @@ const {
     extractChatHistory,
     markdownToHtml,
     formatUsageLine,
+    redactDiagnosticText,
+    redactChatExcerpt,
+    buildDiagnosticPayload,
+    buildGitHubIssueUrl,
 } = require('../../admin/tab.js');
 
 describe('formatMessageLine', () => {
@@ -21,6 +25,43 @@ describe('formatMessageLine', () => {
         expect(formatMessageLine({ role: 'assistant', text: 'Keine Auffaelligkeiten.' })).to.equal(
             '[assistant] Keine Auffaelligkeiten.'
         );
+    });
+});
+
+describe('diagnostic GitHub report', () => {
+    it('redacts secrets, URLs, IP addresses, and object-like IDs', () => {
+        const result = redactDiagnosticText('Bearer abc123 apiKey=secretValue https://example.test/x 10.0.0.4 sensor.0.room.temperature');
+        expect(result).not.to.include('abc123');
+        expect(result).not.to.include('secretValue');
+        expect(result).not.to.include('example.test');
+        expect(result).not.to.include('10.0.0.4');
+        expect(result).not.to.include('sensor.0.room.temperature');
+        expect(redactDiagnosticText('0.1.13')).to.equal('0.1.13');
+    });
+
+    it('builds a bounded payload without raw runtime secrets', () => {
+        const payload = buildDiagnosticPayload({
+            report: { summary: 'Chat fails', actual: 'Bearer hidden' },
+            runtime: { adapterVersion: '0.1.13', chatProviderReachable: true },
+            errors: ['https://example.test/token?apiKey=hidden'],
+        });
+        expect(payload.schema).to.equal('ioBroker.ai-analytics-diagnostic/v1');
+        expect(JSON.stringify(payload)).not.to.include('hidden');
+        expect(payload.runtime.chatProviderReachable).to.equal(true);
+    });
+
+    it('redacts numeric chat values before using a chat answer as report context', () => {
+        const result = redactChatExcerpt('PV liegt bei 4,25 kWh; Datenpunkt sensor.0.pv.total.');
+        expect(result).not.to.include('4,25');
+        expect(result).not.to.include('sensor.0.pv.total');
+        expect(result).to.include('<redacted-number>');
+    });
+
+    it('creates a GitHub bug URL with the bug label and bounded body', () => {
+        const url = buildGitHubIssueUrl(buildDiagnosticPayload({ report: { summary: 'Testfehler' } }));
+        expect(url).to.match(/^https:\/\/github\.com\/jfuchs1988\/ioBroker\.ai-analytics\/issues\/new\?/);
+        expect(url).to.include('labels=bug');
+        expect(url.length).to.be.lessThan(20000);
     });
 });
 
