@@ -3,6 +3,13 @@
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/), Versionierung nach [SemVer](https://semver.org/).
 
+## [0.1.16] - 2026-09-30
+
+### Geändert
+
+- Aktualisiert geprüfte Build- und Testabhängigkeiten auf neuere
+  Patchversionen und erneuert das Admin-Bundle.
+
 ## [0.1.15] - 2026-09-30
 
 ### Sicherheit
