@@ -37,11 +37,11 @@ const __mfImport = (src) =>
 
 
 (async () => {
-  const __mfHostInit = await __mfImport("./chunk-2nKuVIYB.js");
+  const __mfHostInit = await __mfImport("./chunk-BR6QuAk_.js");
   await __mfHostInit.__tla;
   const { initHost } = __mfHostInit;
   await initHost();
-  const __mfPendingShares = await __mfImport("./chunk-DwWbiz_l.js").catch(() => undefined);
+  const __mfPendingShares = await __mfImport("./chunk-B_2MavPQ.js").catch(() => undefined);
   if (__mfPendingShares && typeof __mfPendingShares.preloadPendingShares === "function") await __mfPendingShares.preloadPendingShares();
   if (__mfModuleCache.pendingShareLoads) {
     await Promise.all(__mfModuleCache.pendingShareLoads);
@@ -50,4 +50,4 @@ const __mfImport = (src) =>
   if (__mfReactServerModuleCache?.pendingShareLoads) {
     await Promise.all(__mfReactServerModuleCache.pendingShareLoads);
   }
-})().then(() => __mfImport("./index-DIsCQ80a.js"));
+})().then(() => __mfImport("./index-BOxqt74r.js"));
