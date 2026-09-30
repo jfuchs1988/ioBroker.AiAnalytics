@@ -16,7 +16,7 @@ const { startProactiveScheduler } = require('./lib/scheduler');
 const { ensureUsageState, recordUsage, isBudgetExceeded, refreshTodaySummary } = require('./lib/usage');
 const adminCommands = require('./lib/adminCommands');
 const adminBridge = require('./lib/adminBridge');
-const { buildTimeAndLocationContext } = require('./lib/promptContext');
+const { buildTimeAndLocationContext, resolveTimeZone } = require('./lib/promptContext');
 const { classifyValueKind } = require('./lib/valueKindClassifier');
 const { classifyDataQuality } = require('./lib/dataQualityClassifier');
 const { findAnomalyCandidates, isEligibleCatalogEntry } = require('./lib/anomalyDetector');
@@ -39,6 +39,7 @@ const VALUE_KIND_BACKFILL_BATCH_SIZE = 20;
 const DATA_QUALITY_BACKFILL_BATCH_SIZE = 20;
 const CATALOG_SYNC_STATE = 'catalogSync';
 const CHAT_PROGRESS_STATE = 'chatProgress';
+const TIME_ZONE_STATE = 'info.timeZone';
 const MAX_CHAT_QUESTION_LENGTH = 16000;
 const MAX_TIMER_MS = 2147483647;
 
@@ -292,6 +293,7 @@ class AiAnalytics extends utils.Adapter {
     }
 
     async initializeRuntime() {
+        await this.ensureTimeZoneState();
         await ensureChatHistoryState(this);
         await ensureUsageState(this);
         await refreshTodaySummary(this);
@@ -385,6 +387,22 @@ class AiAnalytics extends utils.Adapter {
         this.licenseRenewalTimer = setInterval(() => this.renewLicense().catch(() => {}), licenseBackend.RENEWAL_CHECK_INTERVAL_MS);
 
         this.log.info('ai-analytics adapter ready');
+    }
+
+    async ensureTimeZoneState() {
+        const systemConfig = await this.getForeignObjectAsync('system.config').catch(() => null);
+        const resolution = resolveTimeZone({
+            configuredTimeZone: this.config.timeZone,
+            systemTimeZone: systemConfig && systemConfig.common && systemConfig.common.timeZone,
+        });
+        this.aiAnalyticsTimeZone = resolution.effectiveTimeZone;
+        await this.setObjectNotExistsAsync(TIME_ZONE_STATE, {
+            type: 'state',
+            common: { name: 'Effective timezone diagnostics', type: 'string', role: 'json', read: true, write: false },
+            native: {},
+        });
+        await this.setStateAsync(TIME_ZONE_STATE, { val: JSON.stringify(resolution), ack: true });
+        resolution.warnings.forEach(warning => this.log.warn(`Zeitzonenprüfung: ${warning}`));
     }
 
     async syncCatalog(options = {}) {
