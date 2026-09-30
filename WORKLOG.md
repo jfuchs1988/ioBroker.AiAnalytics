@@ -6,17 +6,14 @@ Kurzer Übergabestand für die nächste Sitzung. Abgeschlossene Historie steht i
 
 ## WIP
 
-- **Dependabot-Updates — Branch `fix/dependabot-dev-updates`:** die sechs
-  offenen PRs #55–#60 betreffen ausschließlich direkte Dev-Abhängigkeiten.
-  Zu einer einzelnen Aktualisierung gebündelt; auf die inzwischen aktuellen
-  kompatiblen Patchversionen angehoben und das Admin-Bundle neu gebaut.
-  Verifikation: `npm ci`, `npm test` (536 Unit-/60 Admin-Tests), Lint,
-  Admin-Build, E2E (2 Tests), `npm audit` (0 Vulnerabilities),
-  `check:release` und `git diff --check` erfolgreich. Die sechs bestehenden
-  PRs bleiben offen, bis der Ersatz-PR gemergt ist. Nächster Schritt: committen,
-  Ersatz-PR nach `master` erstellen und dessen CI abwarten; danach die sechs
-  ersetzten Dependabot-PRs/Branches schließen/löschen. Nach Merge folgt Release
-  gemäß `CONTRIBUTING.md`.
+- **Release `0.1.16` — Branch `release/0.1.16`:** Dependabot-PR #68 mit sechs
+  gebündelten und getesteten Dev-Dependency-Patchupdates ist gemergt; PRs #55–#60
+  und ihre Remote-Branches sind geschlossen/gelöscht. Release-Metadaten,
+  `CHANGELOG.md`, Paketversion und Admin-Bundle sind für `0.1.16` aktualisiert.
+  Verifikation nach Versionsbump: `npm test` (536 Unit-/60 Admin-Tests), Lint,
+  E2E (2 Tests), `npm audit` (0 Vulnerabilities), `check:release` sowie
+  `npm run pack:release` erfolgreich. Nächster Schritt: Release-PR mit CI
+  erstellen und mergen, danach Tag `v0.1.16` pushen und GitHub-Release anlegen.
 
 - `fix/uncertain-energy-balance`: Bilanzresiduals mit unsicherer Leistungs- oder
   Zählerhistorie werden verworfen, unvollständige Baseline-Tage ausgeschlossen
