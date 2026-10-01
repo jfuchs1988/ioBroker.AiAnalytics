@@ -1,5 +1,6 @@
 import React from 'react';
 import { ConfigGeneric } from '@iobroker/json-config';
+import AnalysisGuide from './AnalysisGuide.jsx';
 import CatalogDevicesComponent from './CatalogDevices/CatalogDevicesComponent.jsx';
 import {
     csvEscape,
@@ -158,46 +159,9 @@ export class UsageResetComponent extends ConfigGeneric {
     }
 }
 
-const HOW_TO_SECTIONS = [
-    {
-        title: 'Was passiert beim Start einer Prüfung?',
-        text: 'Der Adapter prüft zuerst Lizenz, Provider-Erreichbarkeit, Tagesbudget und laufende Vorgänge. Danach werden aktive, nicht ignorierte Katalogeinträge ausgewählt. Historien werden in begrenzten Zeiträumen gelesen, statistische, Energie- und HVAC-Regeln berechnen Kandidaten. Erst die verdichteten Kandidaten werden der KI zur Erklärung übergeben. Fortschritt, Fehler und Datenlücken werden im Status angezeigt; fremde Objekte werden nicht geschrieben.',
-    },
-    {
-        title: 'Was passiert bei einer Chat-Anfrage?',
-        text: 'Die Frage wird validiert und die Kurz-Historie geladen. Die KI wählt Katalogeinträge und Werkzeuge aus, ruft nur bereits aktiv historisierte Daten ab und arbeitet innerhalb der Limits für Schritte, Werkzeugaufrufe und Zeiträume. Ergebnisse werden typgerecht zusammengeführt, Unsicherheiten aus Datenqualität und Lücken werden kenntlich gemacht, danach formuliert die KI die Antwort. Katalogänderungen erfolgen nur nach ausdrücklicher Nutzerangabe.',
-    },
-    {
-        title: 'Beispiel: Heizungsanalyse pro Raum',
-        text: 'Bei „Welche Anomalien erkennst du bei der Heizung in der Heizperiode 2026 – Analyse pro Raum“ grenzt die KI Zeitraum und Thema ein, filtert Heizungs- und Raumzuordnungen aus dem Katalog, vergleicht passende historische Zeiträume und berücksichtigt Fenster-/Heizungs-Überlappungen sowie Datenqualität. Das Ergebnis gruppiert Auffälligkeiten je Raum und nennt Zeitraum, Messgrundlage, Unsicherheit und mögliche Erklärung statt nur rohe Objekt-IDs auszugeben.',
-    },
-    {
-        title: 'Katalog und valueKind',
-        text: 'valueKind beschreibt die Rechenbedeutung eines Datenpunkts: gauge ist ein Momentanwert, boolean_state ein Zustand, enum_state/text_state sind benannte Textzustände, daily_reset_counter ein Tageszähler, cumulative_total ein fortlaufender Zähler und event_count eine Ereignisanzahl. Die KI darf valueKind nach ausdrücklicher Nutzerangabe ändern. Der Wert wird zentral validiert, als manuell gesetzt markiert und bei inkompatiblen Energie-/HVAC-Rollen abgelehnt.',
-    },
-    {
-        title: 'Weitere wichtige Spalten',
-        text: 'Beschreibung, Einheit und Raum machen Antworten lesbar. Kategorie steuert die fachliche Einordnung. updateFrequency beschreibt, wie oft Werte geschrieben werden; dataCompleteness zeigt vollständige, lückenhafte oder veraltete Historie. ignored blendet Datenpunkte aus Analysen aus. needsReview markiert offene Klassifikationsfragen; reviewReasons erklärt sie maschinenlesbar. Energie- und HVAC-Rollen verbinden Datenpunkte zu Bilanzgruppen bzw. Raumregeln.',
-    },
-    {
-        title: 'Energierollen und Bilanzgruppen',
-        text: 'Eine derivedMetricGroupId verbindet Rollen derselben Anlage. pv_generation, grid_import, grid_feed_in und consumption müssen zählerartige valueKinds besitzen; Batterie-Rollen sind optional. Daraus werden Eigenverbrauch und Bilanzabweichungen berechnet. grid_power und battery_power sind dagegen gauge-Spitzenlastrollen und werden nicht als Tageszähler missverstanden.',
-    },
-    {
-        title: 'Limits und Fortschritt',
-        text: '„Daten werden zusammengestellt ...“ bedeutet, dass Katalog, Historien und Werkzeugergebnisse gesammelt werden. Der Prozentwert bezieht sich auf die KI-Schritte, nicht auf eine einzelne Datenbankabfrage. Danach folgt die Antwortphase. Maximale KI-Schritte, Werkzeugaufrufe und Zeiträume schützen vor Endlosschleifen, übergroßen Antworten und unnötigen Kosten.',
-    },
-];
-
 export class HowToComponent extends ConfigGeneric {
     renderItem() {
-        return <div style={{ display: 'grid', gap: 12, maxWidth: 1000 }}>
-            <p>AI Analytics liest ausschließlich Daten, deren History-, InfluxDB- oder SQL-Aufzeichnung bereits aktiviert ist. Es aktiviert keine Aufzeichnung und schreibt keine fremden ioBroker-Objekte.</p>
-            {HOW_TO_SECTIONS.map(section => <section key={section.title} style={{ border: '1px solid #d7e3f2', borderRadius: 6, overflow: 'hidden' }}>
-                <h3 style={{ margin: 0, padding: '9px 12px', background: '#1976d2', color: '#fff', fontSize: 16 }}>{section.title}</h3>
-                <p style={{ margin: 0, padding: 12, lineHeight: 1.5 }}>{section.text}</p>
-            </section>)}
-        </div>;
+        return <AnalysisGuide />;
     }
 }
 

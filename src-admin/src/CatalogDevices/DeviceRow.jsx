@@ -1,5 +1,6 @@
 import React from 'react';
 import GroupIdPicker from './GroupIdPicker.jsx';
+import { FieldHelp } from '../AnalysisGuide.jsx';
 
 const CATEGORIES = ['consumption', 'generation_pv', 'lighting', 'device_usage', 'environment'];
 const VALUE_KINDS = ['gauge', 'boolean_state', 'enum_state', 'text_state', 'daily_reset_counter', 'cumulative_total', 'event_count'];
@@ -249,6 +250,7 @@ export default class DeviceRow extends React.Component {
                                     </select>
                                     {fieldErrors.updateFrequency ? <span role="alert">{fieldErrors.updateFrequency}</span> : null}
                                 </label>
+                                <FieldHelp field="updateFrequency" />
                                 <label>
                                     Vollständigkeit{' '}
                                     <select aria-label={`Vollständigkeit für ${entry.sourceId}`} value={entry.dataCompleteness || ''} onChange={event => this.save({ dataCompleteness: event.target.value })}>
@@ -256,10 +258,12 @@ export default class DeviceRow extends React.Component {
                                     </select>
                                     {fieldErrors.dataCompleteness ? <span role="alert">{fieldErrors.dataCompleteness}</span> : null}
                                 </label>
+                                <FieldHelp field="dataCompleteness" />
                                 <label>
                                     Max. Zähleranstieg (kWh/h){' '}
                                     <input aria-label={`Maximal plausibler Zähleranstieg für ${entry.sourceId}`} type="number" min="0" max={MAX_PLAUSIBLE_RATE} step="any" value={this.state.maxPlausibleKwhPerHour} onChange={event => this.setState({ maxPlausibleKwhPerHour: event.target.value })} onBlur={() => this.handleRateBlur()} />
                                 </label>
+                                <FieldHelp field="maxPlausibleKwhPerHour" />
                                 <label>
                                     Energie-Rolle{' '}
                                     <select aria-label={`Energie-Rolle für ${entry.sourceId}`} value={effectiveRole} onChange={event => this.handleRoleChange(event.target.value)}>
@@ -267,25 +271,32 @@ export default class DeviceRow extends React.Component {
                                         {DERIVED_METRIC_ROLES.map(role => <option key={role} value={role}>{role}</option>)}
                                     </select>
                                 </label>
+                                <FieldHelp field="derivedMetricRole" />
                                 {effectiveRole ? (
-                                    <GroupIdPicker
-                                        ariaLabel={`Energiebilanz-Gruppe für ${entry.sourceId}`}
-                                        value={entry.derivedMetricGroupId}
-                                        existingGroups={existingGroups}
-                                        onChange={group => this.handleGroupChange(group)}
-                                    />
+                                    <span>
+                                        <GroupIdPicker
+                                            ariaLabel={`Energiebilanz-Gruppe für ${entry.sourceId}`}
+                                            value={entry.derivedMetricGroupId}
+                                            existingGroups={existingGroups}
+                                            onChange={group => this.handleGroupChange(group)}
+                                        />
+                                        <FieldHelp field="derivedMetricGroupId" />
+                                    </span>
                                 ) : null}
                                 {fieldErrors.derivedMetricRole ? <span role="alert">{fieldErrors.derivedMetricRole}</span> : null}
                                 {(effectiveRole === 'grid_power' || effectiveRole === 'battery_power') ? (
-                                    <label>
-                                        <input
-                                            type="checkbox"
-                                            aria-label={`Vorzeichen invertiert für ${entry.sourceId}`}
-                                            checked={Boolean(entry.derivedMetricInverted)}
-                                            onChange={event => this.save({ derivedMetricInverted: event.target.checked })}
-                                        />
-                                        {' '}Vorzeichen invertiert
-                                    </label>
+                                    <>
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                aria-label={`Vorzeichen invertiert für ${entry.sourceId}`}
+                                                checked={Boolean(entry.derivedMetricInverted)}
+                                                onChange={event => this.save({ derivedMetricInverted: event.target.checked })}
+                                            />
+                                            {' '}Vorzeichen invertiert
+                                        </label>
+                                        <FieldHelp field="derivedMetricInverted" />
+                                    </>
                                 ) : null}
                                 <label>
                                     HVAC-Rolle{' '}
@@ -300,6 +311,7 @@ export default class DeviceRow extends React.Component {
                                         {HVAC_ROLES.map(role => <option key={role} value={role}>{role}</option>)}
                                     </select>
                                 </label>
+                                <FieldHelp field="hvacRole" />
                                 {fieldErrors.hvacRole ? <span role="alert">{fieldErrors.hvacRole}</span> : null}
                             </div>
                         </td>

@@ -73,6 +73,7 @@ describe('admin configuration links and model discovery', () => {
         expect(settings.maxPeriodsPerRequest.default).to.equal(1024);
         expect(settings.maxPeriodsPerToolCall.default).to.equal(120);
         expect(config.items.howToTab.items.howToContent.name).to.equal('AiAnalyticsConfig/Components/HowToComponent');
+        expect(config.items.howToTab.label).to.deep.equal({ de: 'Wissen & Analyse', en: 'Knowledge & Analysis' });
         expect(fs.readFileSync(path.join(ROOT, 'src-admin', 'src', 'Components.js'), 'utf8')).to.include('HowToComponent');
     });
 

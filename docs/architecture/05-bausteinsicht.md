@@ -35,9 +35,11 @@ admin/
 ├── tab.html / tab.js       Custom Tab "AI Analytics" mit Sub-Navigation
                               (Chat / Budget), gemeinsame Socket-Verbindung
 src-admin/src/
+├── AnalysisGuide.jsx        DE/EN-Nachschlagewerk zu Analyseablauf, Tools und Katalogfeldern
+├── analysisGuideContent.js  Strukturierte Hilfe-Texte, Rollen-/Enum-Bedeutungen und Feldhilfen
 ├── CatalogDevices/         `CatalogDevicesComponent` (Hauptkomponente, Editierbar-/Sortier-/Bulk-Logik)
 │   ├── CatalogDevicesComponent.jsx
-│   ├── DeviceRow.jsx        Einzelne Gerätezeile mit Detail-Panel
+│   ├── DeviceRow.jsx        Einzelne Gerätezeile mit Detail-Panel und Feldhilfe
 │   ├── BulkEditToolbar.jsx  Toolbar für Mehrfachauswahl
 │   ├── GroupIdPicker.jsx    Energie-Gruppen-Auswahldialog
 │   ├── catalogTableUtils.js Sortierung/Filterung/Status-Label-Funktionen

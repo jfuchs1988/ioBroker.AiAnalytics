@@ -6,14 +6,15 @@ Kurzer Übergabestand für die nächste Sitzung. Abgeschlossene Historie steht i
 
 ## WIP
 
-- **Release `0.1.16` — Branch `release/0.1.16`:** Dependabot-PR #68 mit sechs
-  gebündelten und getesteten Dev-Dependency-Patchupdates ist gemergt; PRs #55–#60
-  und ihre Remote-Branches sind geschlossen/gelöscht. Release-Metadaten,
-  `CHANGELOG.md`, Paketversion und Admin-Bundle sind für `0.1.16` aktualisiert.
-  Verifikation nach Versionsbump: `npm test` (536 Unit-/60 Admin-Tests), Lint,
-  E2E (2 Tests), `npm audit` (0 Vulnerabilities), `check:release` sowie
-  `npm run pack:release` erfolgreich. Nächster Schritt: Release-PR mit CI
-  erstellen und mergen, danach Tag `v0.1.16` pushen und GitHub-Release anlegen.
+- **UI-Wissensbereich — Branch `feature/ui-analysis-guide`:** Die bestehende
+  How-To-Seite wird zweisprachig und erklärt Ablauf, Tools, Kategorien sowie alle
+  Katalogfelder; die Geräteliste erhält kontextbezogene Feldhilfen. Spec/Plan:
+  `docs/specs/2026-10-01-admin-analyse-guide.md` und
+  `docs/plans/2026-10-01-admin-analyse-guide.md`. Verifikation: `npm test`
+  (536 Unit-/67 Admin-Tests), Lint, Admin-Build und `git diff --check` grün.
+  Browser-Abnahme an einer laufenden ioBroker-Admin-Instanz ist noch offen.
+  Nächster Schritt: PR/CI abwarten und mergen; danach Release `0.1.17` gemäß
+  `CONTRIBUTING.md`. Die Live-Admin-Abnahme ist in dieser Umgebung nicht erfolgt.
 
 - `fix/uncertain-energy-balance`: Bilanzresiduals mit unsicherer Leistungs- oder
   Zählerhistorie werden verworfen, unvollständige Baseline-Tage ausgeschlossen

@@ -437,14 +437,8 @@
     },
     "howToTab": {
       "type": "panel",
-      "label": "How To",
+      "label": { "de": "Wissen & Analyse", "en": "Knowledge & Analysis" },
       "items": {
-        "howToHeader": {
-          "type": "header",
-          "text": "How To: AI Analytics verstehen",
-          "size": 3,
-          "newLine": true
-        },
         "howToContent": {
           "type": "custom",
           "url": "custom/customComponents.js",
