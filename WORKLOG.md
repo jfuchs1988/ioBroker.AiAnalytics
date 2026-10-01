@@ -6,15 +6,15 @@ Kurzer Übergabestand für die nächste Sitzung. Abgeschlossene Historie steht i
 
 ## WIP
 
-- **UI-Wissensbereich — Branch `feature/ui-analysis-guide`:** Die bestehende
-  How-To-Seite wird zweisprachig und erklärt Ablauf, Tools, Kategorien sowie alle
-  Katalogfelder; die Geräteliste erhält kontextbezogene Feldhilfen. Spec/Plan:
-  `docs/specs/2026-10-01-admin-analyse-guide.md` und
-  `docs/plans/2026-10-01-admin-analyse-guide.md`. Verifikation: `npm test`
-  (536 Unit-/67 Admin-Tests), Lint, Admin-Build und `git diff --check` grün.
-  Browser-Abnahme an einer laufenden ioBroker-Admin-Instanz ist noch offen.
-  Nächster Schritt: PR/CI abwarten und mergen; danach Release `0.1.17` gemäß
-  `CONTRIBUTING.md`. Die Live-Admin-Abnahme ist in dieser Umgebung nicht erfolgt.
+- **Release `0.1.17` — Branch `release/0.1.17`:** UI-Wissensbereich aus PR #70
+  ist gemergt. Versionsdateien/Changelog aktualisiert; der neue
+  `common.news`-Eintrag ist in allen ioBroker-Sprachen übersetzt.
+  Verifikation nach Versionsbump: `npm ci`, `npm test` (536 Unit-/67 Admin-Tests),
+  Lint, Admin-Build, E2E (2 Tests), `npm audit` (0 Vulnerabilities),
+  `check:release`, Paketbau und Tarball-Ausschlüsse erfolgreich. Die Browser-
+  Abnahme an einer laufenden Admin-Instanz und der separate W154-Fix für ältere
+  `common.news`-Einträge bleiben offen. Nächster Schritt: Release-PR/CI, Merge,
+  Tag und GitHub-Release.
 
 - `fix/uncertain-energy-balance`: Bilanzresiduals mit unsicherer Leistungs- oder
   Zählerhistorie werden verworfen, unvollständige Baseline-Tage ausgeschlossen
