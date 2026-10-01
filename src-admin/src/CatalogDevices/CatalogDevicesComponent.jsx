@@ -1,5 +1,6 @@
 import React from 'react';
 import { ConfigGeneric } from '@iobroker/json-config';
+import { FieldHelp } from '../AnalysisGuide.jsx';
 import DeviceRow from './DeviceRow.jsx';
 import BulkEditToolbar from './BulkEditToolbar.jsx';
 import { filterEntries, sortEntries, nextSortState } from './catalogTableUtils.js';
@@ -454,10 +455,13 @@ export default class CatalogDevicesComponent extends ConfigGeneric {
         const active = sort && sort.key === key;
         const indicator = active ? (sort.direction === 'asc' ? ' ▲' : ' ▼') : '';
         return (
-            <th scope="col" key={key}>
-                <button type="button" aria-label={`Nach ${label} sortieren`} onClick={() => this.setState({ sort: nextSortState(sort, key) })}>
-                    {label}{indicator}
-                </button>
+            <th scope="col" key={key} aria-label={label}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <button type="button" aria-label={`Nach ${label} sortieren`} onClick={() => this.setState({ sort: nextSortState(sort, key) })}>
+                        {label}{indicator}
+                    </button>
+                    <FieldHelp field={key} />
+                </div>
             </th>
         );
     }
@@ -558,7 +562,7 @@ export default class CatalogDevicesComponent extends ConfigGeneric {
                                  <th scope="col">Auswahl</th>
                                  {CATALOG_COLUMNS.filter(column => this.state.visibleColumns.includes(column.key)).map(column => column.sortable
                                      ? this.renderSortHeader(column.key, column.label)
-                                     : <th scope="col" key={column.key}>{column.label}</th>)}
+                                     : <th scope="col" key={column.key} aria-label={column.label}><span>{column.label}</span><FieldHelp field={column.key} /></th>)}
                             </tr>
                         </thead>
                         <tbody>{entries.map(entry => (

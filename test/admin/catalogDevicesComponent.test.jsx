@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CatalogDevicesComponent, { bridgeTimeoutForCommand } from '../../src-admin/src/CatalogDevices/CatalogDevicesComponent.jsx';
 
@@ -76,6 +76,21 @@ describe('CatalogDevicesComponent', () => {
         await waitFor(() => expect(screen.getByText('Legende: Energie- und Leistungsrollen')).toBeTruthy());
         expect(screen.getByText(/PV-Erzeugung: Energiezähler/)).toBeTruthy();
         expect(screen.getByText(/Gauge-Werte beschreiben Leistung/)).toBeTruthy();
+    });
+
+    it('shows accessible bilingual help on catalog property headers', async () => {
+        const user = userEvent.setup();
+        const socket = makeFakeSocket({ listCatalogEntries: () => ({ entries: ENTRIES }) });
+        render(<CatalogDevicesComponent schema={{}} data={{}} attr="catalogDevices" onChange={() => {}} onError={() => {}} oContext={baseOContext(socket)} />);
+
+        await waitFor(() => expect(screen.getByText('javascript.0.b')).toBeTruthy());
+        const help = screen.getByLabelText('Erklärung: Kategorie / Category');
+        await user.click(help);
+        const note = within(help.closest('details')).getByRole('note');
+
+        expect(note).toHaveTextContent('DE');
+        expect(note).toHaveTextContent('EN');
+        expect(note).toHaveTextContent('Fachliche Sortierung');
     });
 
     it('renders one body cell per header cell for every default-visible column', async () => {
