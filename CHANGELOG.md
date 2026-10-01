@@ -3,6 +3,13 @@
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/), Versionierung nach [SemVer](https://semver.org/).
 
+## [0.1.17] - 2026-10-01
+
+### Hinzugefügt
+
+- Zweisprachiger Wissensbereich zu Analyseablauf, Werkzeugen, Kategorien und
+  Datenpunkt-Eigenschaften; kontextbezogene Hilfen in der Geräteliste.
+
 ## [0.1.16] - 2026-09-30
 
 ### Geändert
